@@ -1,0 +1,140 @@
+{ 
+  "description": "Data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 3112a, on the Phoenix and Isoprobe-T TIMS at the Geology Section, Department of Geoscience and Natural Resources, University of Copenhagen",
+
+  "element" : "Cr",
+
+  "cycle_columns" : 
+    { "49" : 0, 
+      "50" : 1, 
+      "51" : 2, 
+      "52" : 3, 
+      "53" : 4, 
+      "54" : 5, 
+      "56" : 6 
+    },
+ 
+  "report_fracs" : 
+    ["52", ["50", "53", "54"]],
+
+  "reduce_fracs" : 
+    ["54", ["50", "52", "53"]],
+    
+  "rel_report":
+    {
+        "d53Cr_SRM3112a" : ["53Cr", "52Cr", 1000, true]
+    },
+
+  "used_isotopes" :
+    { 
+      "50" : [["51", "V"]],
+      "52" : [],
+      "53" : [],
+      "54" : [["56", "Fe"]]    
+    },
+
+  "masses" :
+    { "50Cr" : 49.946049,
+      "52Cr" : 51.940512,
+      "53Cr" : 52.940653,
+      "54Cr" : 53.938885,
+      "49Ti" : 48.947871,
+      "50Ti" : 49.944792,
+      "51V"  : 50.943964,
+      "50V"  : 49.947163,
+      "54Fe" : 53.939613,
+      "56Fe" : 55.934941},
+
+  "nat_ratios" :
+    { "49Ti/50Ti" :   1.0185185185,
+      "51V/50V"   : 399.0,
+      "56Fe/54Fe" :  15.698587},
+
+  "spike" :
+    { "50Cr"      :  0.5379706253,
+      "52Cr"      :  0.0350570628,
+      "53Cr"      :  0.0108693041,
+      "54Cr"      :  0.4161030079,
+      "amu"       : 51.70995,
+      "50Cr/52Cr" : 15.3455704158,
+      "53Cr/52Cr" :  0.3100460578,
+      "54Cr/52Cr" : 11.8693060696,
+      "50Cr/54Cr" :  1.2928784822,
+      "52Cr/54Cr" :  0.0842509237,
+      "53Cr/54Cr" :  0.0261216668},
+
+  "standard" :
+    { "name" : "SRM3112a",
+      "50Cr/52Cr" : 0.051859,
+      "53Cr/52Cr" : 0.1134566008,
+      "54Cr/52Cr" : 0.0282095362,
+      "50Cr/54Cr" : 1.8383499691,
+      "52Cr/54Cr" : 35.4490053633,
+      "53Cr/54Cr" : 4.0219236508},
+
+  "outlier_rejection":
+    { "iqr_limit" : 1.5,
+      "max_fraction" : 0.05},
+
+  "initial_parameters":
+    [ 0.003,-0.06,0.8 ],
+
+  "date":{
+    "field" : ["PARAMETERS", "Analysis Start Time"],
+    "parse_format" : "%A %d %B %Y %H:%M:%S",
+    "report_format" : "%Y-%m-%d %H:%M:%S"},
+
+  "file_spec":
+        {
+        "PARAMETERS": [
+            "params",
+            {
+                "start_string": "TUNING PARAMETERS",
+                "labels": [
+                    "Method Name",
+                    "Analysis Start Time",
+                    "Cycles per Block",
+                    "Number of Blocks",
+                    "No. of Sequences",
+                    "Sample/Vial Number",
+                    "Sample ID",
+                    "User name",
+                    "Serial Number",
+                    "XL Doc Name",
+                    "Temperature (°C)",
+                    "Temp Error (°C)",
+                    "Current (Amps)"
+                ]
+            }
+        ],
+        "CYCLES": [
+            "table",
+            {
+                "start_string": "Cycle,Time",
+                "end_string": "\nBLOCK Data",
+                "first_col": 2,
+                "n_columns": 7,
+                "skip_rows": 1
+            },
+            {
+                "search_string": ",Function:",
+                "first_col": 2,
+                "n_columns": 9
+            }
+        ],
+        "MONITORING": [
+            "table",
+            {
+                "start_string": "FAC Temp",
+                "end_string": "TUNING PARAMETERS",
+                "first_col": 7,
+                "n_columns": 10,
+                "skip_rows": 1
+            },
+            {
+                "search_string": "FAC Temp",
+                "first_col": 7,
+                "n_columns": 10
+            }
+        ]
+    }
+}

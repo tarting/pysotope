@@ -1,0 +1,197 @@
+{ 
+  "element" : "Cd",
+
+  "cycle_columns" : 
+    { "106" : 0, 
+      "108" : 1, 
+      "110" : 2, 
+      "111" : 3, 
+      "112" : 4, 
+      "113" : 5, 
+      "114" : 6, 
+      "116" : 7,
+      "118" : 8
+    },
+ 
+  "report_fracs" : 
+    ["110", ["106", "108", "111", "112", "113", "114", "116"]],
+
+  "reduce_fracs" : 
+    ["108", ["106", "110", "112"]],
+    
+  "rel_report":
+    {   
+        "e(111Cd/110Cd)_SRM3108" : ["111Cd", "110Cd", 10000, false],
+        "e(112Cd/110Cd)_SRM3108" : ["112Cd", "110Cd", 10000, true],
+        "e(113Cd/110Cd)_SRM3108" : ["113Cd", "110Cd", 10000, false],
+        "e(114Cd/110Cd)_SRM3108" : ["114Cd", "110Cd", 10000, false]
+    },
+
+  "used_isotopes" :
+    { 
+      "106" : [],
+      "108" : [],
+      "110" : [],
+      "111" : [],
+      "112" : [["118", "Sn"]],
+      "113" : [],
+      "114" : [["118", "Sn"]],
+      "116" : [["118", "Sn"]]
+    },
+
+
+  "masses" :
+    { "106Cd" : 105.9064580,
+      "108Cd" : 107.9041834,
+      "110Cd" : 109.9030056,
+      "111Cd" : 110.9041816,
+      "112Cd" : 111.9027572,
+      "113Cd" : 112.9044009,
+      "114Cd" : 113.9033581,
+      "116Cd" : 115.9047554,
+      "112Sn" : 111.904826,
+      "114Sn" : 113.902784,
+      "116Sn" : 115.901747,
+      "118Sn" : 117.901609
+    },
+
+  "nat_ratios" :
+    { "118Sn/112Sn" : 24.96907216,
+      "118Sn/114Sn" : 37.26153846,
+      "118Sn/116Sn" : 1.666896077
+    },
+
+  "spike" :
+    { "106Cd"       : 0.503019242,
+      "108Cd"       : 0.347704899,
+      "110Cd"       : 0.148583462,
+      "111Cd"       : 0.000233108,
+      "112Cd"       : 0.000169916,
+      "113Cd"       : 7.55662E-05,
+      "114Cd"       : 0.000183091,
+      "116Cd"       : 3.07167E-05,
+      "amu"         : 108.2912256,
+      "106Cd/110Cd" : 3.385432231,
+      "108Cd/110Cd" : 2.340131897,
+      "111Cd/110Cd" : 0.001568867,
+      "112Cd/110Cd" : 0.001143573,
+      "113Cd/110Cd" : 0.000508578,
+      "114Cd/110Cd" : 0.001232242,
+      "116Cd/110Cd" : 0.000206730,
+      "106Cd/108Cd" : 1.446684366,
+      "110Cd/108Cd" : 0.427326341,
+      "111Cd/108Cd" : 0.000670418,
+      "112Cd/108Cd" : 0.000488679,
+      "113Cd/108Cd" : 0.000217329,
+      "114Cd/108Cd" : 0.000526569,
+      "116Cd/108Cd" : 8.83412E-05},
+
+  "standard" :
+    { "name"        : "SRM3108_te_raw",
+      "106Cd":         0.012530461,
+      "108Cd":         0.008912057,
+      "110Cd":         0.124826355,
+      "111Cd":         0.127615448,
+      "112Cd":         0.240578348,
+      "113Cd":         0.121520843,
+      "114Cd":         0.285978261,
+      "116Cd":         0.074434714,
+      "amu":         111.3084268,
+      "106Cd/110Cd":   0.100383136,
+      "108Cd/110Cd":   0.071395636,
+      "111Cd/110Cd":   1.02234378,
+      "112Cd/110Cd":   1.927304113,
+      "113Cd/110Cd":   0.973519116,
+      "114Cd/110Cd":   2.291008657,
+      "116Cd/110Cd":   0.596306076,
+      "106Cd/108Cd":   1.406012216,
+      "110Cd/108Cd":   14.00645831,
+      "111Cd/108Cd":   14.31941554,
+      "112Cd/108Cd":   26.99470472,
+      "113Cd/108Cd":   13.63555491,
+      "114Cd/108Cd":   32.08891725,
+      "116Cd/108Cd":   8.352136198},
+
+
+  "outlier_rejection":
+    { "iqr_limit" : 1.5,
+      "max_fraction" : 0.05},
+
+  "initial_parameters":
+    [ 0.003,-0.06,0.8 ],
+
+  "date":{
+    "field" : ["PARAMETERS", "Analysis Start Time"],
+    "parse_format" : "%A %d %B %Y %H:%M:%S",
+    "report_format" : "%Y-%m-%d %H:%M:%S"},
+  
+  "file_spec":
+        {
+        "PARAMETERS": [
+            "params",
+            {
+                "start_string": "TUNING PARAMETERS",
+                "labels": [
+                    "Method Name",
+                    "Analysis Start Time",
+                    "Cycles per Block",
+                    "Number of Blocks",
+                    "No. of Sequences",
+                    "Sample/Vial Number",
+                    "Sample ID",
+                    "User name",
+                    "Serial Number",
+                    "XL Doc Name",
+                    "Temperature (°C)",
+                    "Temp Error (°C)",
+                    "Current (Amps)"
+                ]
+            }
+        ],
+        "CYCLES": [
+            "table",
+            {
+                "start_string": "Cycle,Time",
+                "end_string": "\nBLOCK Data",
+                "first_col": 2,
+                "n_columns": 9,
+                "skip_rows": 1
+            },
+            {
+                "search_string": ",Function:",
+                "first_col": 2,
+                "n_columns": 9
+            }
+        ],
+        "MONITORING": [
+            "table",
+            {
+                "start_string": "FAC Temp",
+                "end_string": "TUNING PARAMETERS",
+                "first_col": 7,
+                "n_columns": 10,
+                "skip_rows": 1
+            },
+            {
+                "search_string": "FAC Temp",
+                "first_col": 7,
+                "n_columns": 10
+            }
+        ],
+        "TUNING": [
+            "table",
+            {
+                "start_string": "Time,Source",
+                "end_string": "Analysis Runtime Parameters",
+                "first_col": 0,
+                "n_columns": 12,
+                "skip_rows": 2
+            },
+            {
+                "search_string": "Time,Source",
+                "first_col": 0,
+                "n_columns": 12
+            }
+        ]
+    }
+}
