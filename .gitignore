@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Data for testing
+test_data/
+
+# MacOS
+.DS_Store
