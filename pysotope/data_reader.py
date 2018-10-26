@@ -26,6 +26,7 @@ given by the converer_path, which dumps the contents of sheets contiguously to s
 
 
 import os
+import sys
 import subprocess
 import json
 from datetime import datetime as dt
@@ -33,13 +34,21 @@ from functools import reduce
 
 import numpy as np
 
-from pysotope.exceptions import UndefinedDataDefinition
+from pysotope.exceptions import UndefinedDataDefinition, UnknownPlatform
 
 # Move to settings module, only used in the read_xls function
 # path to a converter which dumps the contents of an xls to stdout
 # as csv, appending all worksheets.
 # Currently using binary shipped with the Haskell xls module.
-converter_path = '/Users/fzb950/git/cadred/bin/xls2csv_macos_x86-64' 
+if sys.platform == 'win32':
+    converter_path = '../bin/xls2csv.exe'
+elif sys.platform == 'darwin':
+    converter_path = '../bin/xls2csv_macos_x86-64' 
+elif sys.platform == 'linux':
+    converter_path = '../bin/xls2csv'
+else:
+    raise UnknownPlatform('Platform [{}] unknown'.format(sys.platform))
+converter_path = os.path.abspath(converter_path)
 
 def read_json(file_path):
     with open(file_path, 'r') as fh:
@@ -53,7 +62,8 @@ def xls_dump(converter_path, in_file, out_file=None):
     Optionally dumps the string into a UTF-8 formatted file.
     '''
     if os.path.isfile(in_file):
-        output = subprocess.check_output([converter_path,in_file], universal_newlines=True)
+        in_path = os.path.abspath(in_file)
+        output = subprocess.check_output([converter_path,in_path], universal_newlines=True)
         if out_file is not None:
             with open(out_file,'w') as fh:
                 fh.write(output)

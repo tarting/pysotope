@@ -24,3 +24,7 @@ Exceptions for pysotope
 
 class UndefinedDataDefinition(Exception):
     pass
+
+
+class UnknownPlatform(Exception):
+    pass
