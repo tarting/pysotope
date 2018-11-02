@@ -15,8 +15,10 @@ setup(
     url='https://github.com/tarting/pysotope',
     license='GPL-2',
     packages=find_packages(),
-    data_files=[('pysotope', ['pysotope/spec/Cr-reduction_scheme.json',
-                              'pysotope/spec/Cd-reduction_scheme.json',])],
+    data_files=[('pysotope', 
+    	['pysotope/spec/Cr-reduction_scheme.json',
+         'pysotope/spec/Cd-reduction_scheme.json',
+         'bin/xls2csv'])],
     install_requires=requirements,
 #    entry_points={
 #        'console_scripts': ['pynvert = pysotope.invert:main']
