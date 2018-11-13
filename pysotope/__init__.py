@@ -25,7 +25,7 @@ from datetime import datetime as dt
 from collections import namedtuple
 
 from pysotope.data_reader import read_xls, read_json, parse_date
-from pysotope.invert import invert_data, summarise_data
+from pysotope.invert import invert_data, summarise_data, exp_corr
 
 labeled = namedtuple('labeled', ['labels', 'data'])
 reduced = namedtuple('reduced', ['summary', 'data'])
