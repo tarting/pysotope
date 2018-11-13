@@ -85,27 +85,6 @@
 
   "file_spec":
         {
-        "PARAMETERS": [
-            "params",
-            {
-                "start_string": "TUNING PARAMETERS",
-                "labels": [
-                    "Method Name",
-                    "Analysis Start Time",
-                    "Cycles per Block",
-                    "Number of Blocks",
-                    "No. of Sequences",
-                    "Sample/Vial Number",
-                    "Sample ID",
-                    "User name",
-                    "Serial Number",
-                    "XL Doc Name",
-                    "Temperature (°C)",
-                    "Temp Error (°C)",
-                    "Current (Amps)"
-                ]
-            }
-        ],
         "CYCLES": [
             "table",
             {
@@ -119,21 +98,6 @@
                 "search_string": ",Function:",
                 "first_col": 2,
                 "n_columns": 7
-            }
-        ],
-        "MONITORING": [
-            "table",
-            {
-                "start_string": "FAC Temp",
-                "end_string": "TUNING PARAMETERS",
-                "first_col": 7,
-                "n_columns": 10,
-                "skip_rows": 1
-            },
-            {
-                "search_string": "FAC Temp",
-                "first_col": 7,
-                "n_columns": 10
             }
         ]
     }

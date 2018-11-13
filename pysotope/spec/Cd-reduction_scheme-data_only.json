@@ -122,35 +122,9 @@
 
   "initial_parameters":
     [ 0.003,-0.06,0.8 ],
-
-  "date":{
-    "field" : ["PARAMETERS", "Analysis Start Time"],
-    "parse_format" : "%A %d %B %Y %H:%M:%S",
-    "report_format" : "%Y-%m-%d %H:%M:%S"},
   
   "file_spec":
         {
-        "PARAMETERS": [
-            "params",
-            {
-                "start_string": "TUNING PARAMETERS",
-                "labels": [
-                    "Method Name",
-                    "Analysis Start Time",
-                    "Cycles per Block",
-                    "Number of Blocks",
-                    "No. of Sequences",
-                    "Sample/Vial Number",
-                    "Sample ID",
-                    "User name",
-                    "Serial Number",
-                    "XL Doc Name",
-                    "Temperature (°C)",
-                    "Temp Error (°C)",
-                    "Current (Amps)"
-                ]
-            }
-        ],
         "CYCLES": [
             "table",
             {
@@ -164,36 +138,6 @@
                 "search_string": ",Function:",
                 "first_col": 2,
                 "n_columns": 9
-            }
-        ],
-        "MONITORING": [
-            "table",
-            {
-                "start_string": "FAC Temp",
-                "end_string": "TUNING PARAMETERS",
-                "first_col": 7,
-                "n_columns": 10,
-                "skip_rows": 1
-            },
-            {
-                "search_string": "FAC Temp",
-                "first_col": 7,
-                "n_columns": 10
-            }
-        ],
-        "TUNING": [
-            "table",
-            {
-                "start_string": "Time,Source",
-                "end_string": "Analysis Runtime Parameters",
-                "first_col": 0,
-                "n_columns": 12,
-                "skip_rows": 2
-            },
-            {
-                "search_string": "Time,Source",
-                "first_col": 0,
-                "n_columns": 12
             }
         ]
     }
