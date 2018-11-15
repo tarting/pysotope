@@ -148,11 +148,20 @@
   # csv file. Configured to read data files from the IonVantage software suite.
   "file_spec":
         {
-        "PARAMETERS": [
-            "params",
+        # This is a parameter lookup definition
+        # I.e. returns a list of key value pairs
+        "PARAMETERS": [ # Label in output dict
+            "params", # param lookup identifier
             {
-                "start_string": "TUNING PARAMETERS",
-                "labels": [
+                # Search string data collection starts at the first
+                # match if search_string.
+                # In this case it is the name of the excel sheet.
+                "start_string": "TUNING PARAMETERS", 
+                # The algorightm searches for this value in the csv
+                # and returns the value in the cell left of the match.
+                # The params file has a colon (:) at the end of these labels
+                # it is skipped in the definition.
+                "labels": [ # list of lookup labels
                     "Method Name",
                     "Analysis Start Time",
                     "Cycles per Block",
@@ -168,21 +177,28 @@
                     "Current (Amps)"]
             }
         ],
-        "CYCLES": [
-            "table",
-            {
-                "start_string": "Cycle,Time",
-                "end_string": "\nBLOCK Data",
-                "first_col": 2,
-                "n_columns": 7,
-                "skip_rows": 1
+        # Table lookup
+        "CYCLES": [ # Label for output dict
+            "table", # table lookup identifier
+            { # Dictionary defining the data lookup
+                # First row lookup string
+                "start_string": "Cycle,Time", 
+                # After last column lookup, skips any 
+                # matches prior to start string
+                "end_string": "\nBLOCK Data", 
+                "first_col": 2, # First column to include (starts at 0)
+                "n_columns": 7, # Number of columns to include
+                # Number of rows to skip (value of 0 includes the row 
+                # matced by the start_string)
+                "skip_rows": 1 
             },
             {
-                "search_string": ",Function:",
-                "first_col": 2,
-                "n_columns": 7
+                "search_string": ",Function:", # Search string to match for label row
+                "first_col": 2, # Number of columns to include
+                "n_columns": 7 # Number of columns to include
             }
         ],
+        # Another table lookup
         "MONITORING": [
             "table",
             {
