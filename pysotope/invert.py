@@ -37,8 +37,8 @@ def exp_corr(R_initial, R_mass, frac_fact):
     '''
     Function for exponential mass bias correction.
     '''
-    # return np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
-    return R_initial * np.exp(-frac_fact * np.log(R_mass))
+    return np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
+    #return R_initial * np.exp(-frac_fact * np.log(R_mass))
 
 def gen_interf_func(m_corr, m_ref, interf_elem, file_spec):
     '''
@@ -256,6 +256,8 @@ def invert_data(data, file_spec):
     spike = file_spec['spike']
     elem = file_spec['element']
     reduced = cal_red(data['CYCLES'])
+    interferences = {k: v for k, v in file_spec['used_isotopes'].items() if len(v) > 0}
+    nat_ratios = file_spec['nat_ratios']
 
     results = {k:np.array(c) for k,c in zip(labels, zip(*reduced))}
 
@@ -271,6 +273,18 @@ def invert_data(data, file_spec):
         ratio_lab = 'meas_{}/{}'.format(num_str, den_str)
         labels.append(ratio_lab)
         results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
+
+    # Calculate interference ratios
+    for den, interfs in interferences.items():
+        #interf_den_str = '{}{}'.format(den, 'raw')
+        interf_den_col = results['raw_{}'.format(den)]
+        for num, interf_elem in interfs:
+            nat_rat = nat_ratios['{0}{2}/{1}{2}'.format(num, den, interf_elem)]
+            num_str = '{}{}'.format(num, interf_elem)
+            interf_num_col = results['raw_{}'.format(num)]
+            ratio_lab = 'interf_{}{}_ppm'.format(den, interf_elem)
+            labels.append(ratio_lab)
+            results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
 
 
     # Calculate solution ratios, instrument fract. corrected.
