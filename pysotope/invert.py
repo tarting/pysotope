@@ -93,7 +93,7 @@ def create_interf_corr(m_to_corr, file_spec):
     def interf_corr_row(row, beta):
         '''
         Corrects {} for interferences listed in "used_isotopes".
-        '''.format(m_to_correct)
+        '''.format(m_to_corr)
         i_m_to_corr = file_spec['cycle_columns'][m_to_corr]
         v = row[i_m_to_corr]
         for k, fun in interf_funcs.items():
