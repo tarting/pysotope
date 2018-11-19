@@ -41,14 +41,15 @@ from pysotope.exceptions import UndefinedDataDefinition, UnknownPlatform
 # as csv, appending all worksheets.
 # Currently using binary shipped with the Haskell xls module.
 if sys.platform == 'win32':
-    converter_path = '../bin/xls2csv.exe'
+    converter = 'xls2csv.exe'
 elif sys.platform == 'darwin':
-    converter_path = '../bin/xls2csv_macos_x86-64' 
+    converter = 'xls2csv_macos_x86-64' 
 elif sys.platform == 'linux':
-    converter_path = '../bin/xls2csv'
+    converter = 'xls2csv'
 else:
     raise UnknownPlatform('Platform [{}] unknown'.format(sys.platform))
-converter_path = os.path.abspath(converter_path)
+converter_path = os.path.join(sys.prefix, 'pysotope','bin', converter) #os.path.abspath(converter_path)
+print(converter_path)
 
 def read_json(file_path):
     with open(file_path, 'r') as fh:
@@ -63,7 +64,7 @@ def xls_dump(converter_path, in_file, out_file=None):
     '''
     if os.path.isfile(in_file):
         in_path = os.path.abspath(in_file)
-        output = subprocess.check_output([converter_path,in_path], universal_newlines=True)
+        output = subprocess.check_output([converter_path ,in_path], universal_newlines=True)
         if out_file is not None:
             with open(out_file,'w') as fh:
                 fh.write(output)
@@ -177,7 +178,7 @@ def read_xls(file_path, file_spec):
     Parses a xls document at file_path into a python dictionary. 
     Given a file_spec in dict format.
     '''
-    contents = xls_dump(converter_path=converter_path, in_file=file_path, out_file=None)
+    contents = xls_dump(converter_path=converter, in_file=file_path, out_file=None)
     distillate = distill_to_dict(contents, file_spec['file_spec'])
     if 'date' in file_spec:
         date_spec = file_spec['date']

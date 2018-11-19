@@ -18,7 +18,9 @@ setup(
     data_files=[('pysotope', 
     	['pysotope/spec/Cr-reduction_scheme.json',
          'pysotope/spec/Cd-reduction_scheme.json',
-         'bin/xls2csv'])],
+         'bin/xls2csv',
+         'bin/xls2csv_macos_x86-64',
+         'bin/xls2csv.exe'])],
     install_requires=requirements,
 #    entry_points={
 #        'console_scripts': ['pynvert = pysotope.invert:main']
