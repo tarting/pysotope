@@ -342,7 +342,7 @@ def invert_data(data, file_spec):
     abund_rep_spk = spike['{}{}'.format(rep_iso,elem)]
     mol_mass_spk = spike['amu']
     results['F_conc'] = results[Q_label] * abund_rep_spk * mol_mass_spl / (abund_rep_spl * mol_mass_spk)
-    
+
     return labels, results
 
 
@@ -351,7 +351,7 @@ def gen_filter_function(iqr_limit, max_fraction):
         '''
         Outlier rejection for satistics calculation.
         '''
-        mean = np.mean(data)
+        mean = np.median(data)
         limit = iqr_limit * stats.iqr(data)
         N = len(data)
         max_num = ceil(N*max_fraction)
