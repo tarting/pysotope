@@ -51,20 +51,27 @@ else:
 converter_path = os.path.join(sys.prefix, 'pysotope','bin', converter) #os.path.abspath(converter_path)
 print(converter_path)
 
+# HACK: Global current file variable is set and unset in the read_xls function (now procedure)
+current_xls_file = ''
+current_row = -1
+
 def read_json(file_path):
     with open(file_path, 'r') as fh:
         file_spec = json.load(fh)
     return file_spec
 
 
-def xls_dump(converter_path, in_file, out_file=None):
+def xls_dump(converter_path, in_file, sheet_index=None, out_file=None):
     '''
     Dumps the content of an xls document into a contiguous csv string.
     Optionally dumps the string into a UTF-8 formatted file.
     '''
     if os.path.isfile(in_file):
         in_path = os.path.abspath(in_file)
-        output = subprocess.check_output([converter_path ,in_path], universal_newlines=True)
+        if sheet_index is None:
+            output = subprocess.check_output([converter_path ,in_path], universal_newlines=True)
+        else:
+            output = subprocess.check_output([converter_path ,in_path, sheet_index], universal_newlines=True)
         if out_file is not None:
             with open(out_file,'w') as fh:
                 fh.write(output)
@@ -73,12 +80,21 @@ def xls_dump(converter_path, in_file, out_file=None):
     
     return output
 
+def parse_float(v):
+    try:
+        value = float(v)
+    except ValueError as e:
+        print('Could not parse float {} in {} row {}'.format(v, current_xls_file, current_row), e, sep='\n', file=sys.stderr )
+        value = np.nan
+    return value
+
 
 def get_table(contents, start_string, end_string, first_col, n_columns, skip_rows=1):
     '''
     Read a data table by reading keywords, gets set number of columns. 
     Skips row with keyword by default.
     '''
+    global current_row
     start = contents[:contents.find(start_string)].rfind('\n') + 1
     table = contents[start:]
     table = table[:table.find(end_string)]
@@ -86,8 +102,25 @@ def get_table(contents, start_string, end_string, first_col, n_columns, skip_row
     table = [l.split(',') for l in table]
     table = [l for l in table if len(reduce(lambda a, b: a+b, l)) > 0]
     table = [l[first_col:first_col+n_columns] for l in table[skip_rows:]]
-    table = [[float(v) for v in r] for r in table]
-    return table
+    n = len(table[0])
+    float_table = []
+    skipped_rows = 0
+    for i, r in enumerate(table):
+        current_row = i - skipped_rows
+        if len(r) == n:
+            try:
+                row = [float(v) for v in r]
+                float_table.append(row)
+            except ValueError as e:
+                print(e, file=sys.stderr)
+                print('Could not parse value in {} row {}: {}'.format(current_xls_file, current_row, r), e, sep='\n', file=sys.stderr )
+                #float_table.append([np.nan for _ in range(n)])
+                skipped_rows += 1
+        else:
+            skipped_rows += 1
+    current_row = -1
+#    table = [[float(v) for v in r] for r in table]
+    return float_table
 
 
 def get_keyword_row(contents, search_string, first_col, n_columns):
@@ -162,8 +195,14 @@ def distill_to_dict(contents, file_spec, np_array=False):
         data = read_spec(contents, spec)
         spec_type = spec[0]
         if spec_type == 'table':
-            aggregated[k+'_columns'] = data[0] 
-            aggregated[k] = np.array(data[1:], dtype=float) if np_array else data[1:]
+            labels = data[0]
+            n = len(labels)
+            aggregated[k+'_columns'] = labels 
+            if np_array:
+                table = np.array(data[1:], dtype=float).dropna()
+            else:
+                table = [r for r in data[1:] if len(r) == n]
+            aggregated[k] = table
         elif spec_type == 'params':
             entry = dict()
             for r in data:
@@ -178,6 +217,8 @@ def read_xls(file_path, file_spec):
     Parses a xls document at file_path into a python dictionary. 
     Given a file_spec in dict format.
     '''
+    global current_xls_file
+    current_xls_file = file_path
     contents = xls_dump(converter_path=converter, in_file=file_path, out_file=None)
     distillate = distill_to_dict(contents, file_spec['file_spec'])
     if 'date' in file_spec:
@@ -191,4 +232,5 @@ def read_xls(file_path, file_spec):
     distillate['raw_file'] = file_path
     distillate['CYCLES_N'] = len(distillate['CYCLES'])
     distillate['timestamp_readxls'] = dt.now().timestamp()
+    current_xls_file = ''
     return distillate

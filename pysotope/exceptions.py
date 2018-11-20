@@ -28,3 +28,6 @@ class UndefinedDataDefinition(Exception):
 
 class UnknownPlatform(Exception):
     pass
+
+class FloatParseError(Exception):
+    pass

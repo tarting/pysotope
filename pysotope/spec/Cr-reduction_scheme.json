@@ -76,7 +76,7 @@
       "max_fraction" : 0.05},
 
   "initial_parameters":
-    [ 0.003,-0.06,0.8 ],
+    [ 0.00,0.2,0.7 ],
 
   "date":{
     "field" : ["PARAMETERS", "Analysis Start Time"],
