@@ -188,7 +188,7 @@ def parse_date(data, file_spec, as_datetime_object=False):
     return date
 
 
-def distill_to_dict(contents, file_spec, np_array=False):
+def distill_to_dict(file_path, file_spec, np_array=False):
     '''Takes xls csv dump and extracts data according to the given file specifications, returns a string'''
     aggregated = dict()
     for k, spec in file_spec.items():
@@ -219,16 +219,16 @@ def read_xls(file_path, file_spec):
     '''
     global current_xls_file
     current_xls_file = file_path
-    contents = xls_dump(converter_path=converter, in_file=file_path, out_file=None)
-    distillate = distill_to_dict(contents, file_spec['file_spec'])
-    if 'date' in file_spec:
-        date_spec = file_spec['date']
-        v = distillate
-        for k in date_spec['field']:
-            v = v[k]
-        datetime_obj = dt.strptime(v, date_spec['parse_format'])
-        distillate['analysis_date'] = datetime_obj.strftime(date_spec['report_format'])
-        distillate['timestamp_analysis'] = datetime_obj.timestamp()
+    #contents = xls_dump(converter_path=converter, in_file=file_path, out_file=None)
+    distillate = distill_to_dict(file_path, file_spec['file_spec'])
+    # if 'date' in file_spec:
+    #     date_spec = file_spec['date']
+    #     v = distillate
+    #     for k in date_spec['field']:
+    #         v = v[k]
+    #     datetime_obj = dt.strptime(v, date_spec['parse_format'])
+    #     distillate['analysis_date'] = datetime_obj.strftime(date_spec['report_format'])
+    #     distillate['timestamp_analysis'] = datetime_obj.timestamp()
     distillate['raw_file'] = file_path
     distillate['CYCLES_N'] = len(distillate['CYCLES'])
     distillate['timestamp_readxls'] = dt.now().timestamp()

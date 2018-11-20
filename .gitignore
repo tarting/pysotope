@@ -108,3 +108,7 @@ test_data/
 
 # MacOS
 .DS_Store
+
+# Interactive testing
+bin/xls2csv.exe_old
+interactive_testing/*
