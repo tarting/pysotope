@@ -48,7 +48,14 @@ elif sys.platform == 'linux':
     converter = 'xls2csv'
 else:
     raise UnknownPlatform('Platform [{}] unknown'.format(sys.platform))
-converter_path = os.path.join(sys.prefix, 'pysotope','bin', converter) #os.path.abspath(converter_path)
+#converter_path = os.path.join(sys.prefix, 'pysotope','bin', converter) #os.path.abspath(converter_path)
+
+converter_path = os.path.abspath(os.path.join(
+        os.path.split(__file__)[0],
+        'bin',
+        converter))
+
+
 print(converter_path)
 
 def read_json(file_path):
@@ -178,7 +185,7 @@ def read_xls(file_path, file_spec):
     Parses a xls document at file_path into a python dictionary. 
     Given a file_spec in dict format.
     '''
-    contents = xls_dump(converter_path=converter, in_file=file_path, out_file=None)
+    contents = xls_dump(converter_path=converter_path, in_file=file_path, out_file=None)
     distillate = distill_to_dict(contents, file_spec['file_spec'])
     if 'date' in file_spec:
         date_spec = file_spec['date']
