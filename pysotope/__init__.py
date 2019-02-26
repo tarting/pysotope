@@ -23,6 +23,10 @@ pysotope - a package for inverting double spike isotope analysis data
 
 from datetime import datetime as dt
 from collections import namedtuple
+import os
+import sys
+
+import click
 
 from pysotope.data_reader import read_xls, read_json, parse_date
 from pysotope.invert import invert_data, summarise_data, exp_corr
@@ -68,3 +72,43 @@ def invert_from_paths(xls_path, file_spec_path):
     invert_xls = get_xls_inverter(file_spec_path)
     reduced = invert_xls(xls_path)
     return reduced
+
+
+def safe_read_file(filepath, spec):
+    filename = os.path.split(filepath)[1][:-4]
+    try: 
+        data = read_xls(filepath, spec)
+    except Exception as e:
+        sys.stdout.flush()
+        click.echo('\rERROR  | while reading file {}: {}'.format(
+					click.format_filename(filepath), e), 
+              err=True)
+        data = {}
+    return filename, data
+
+def safe_invert_data(data, spec):
+    if data == {}:
+        labels = []
+        rows = []
+    else:
+        try:
+            labels, rows = invert_data(data, spec)
+        except Exception as e:
+            labels = []
+            rows = {}
+            sys.stdout.flush()
+            click.echo('\rERROR  | while reducing file: {}'.format(e), 
+                  err=True)
+    return labels, rows
+
+def safe_summarise_data(t_labels, t_rows, spec):
+    try: 
+        s_labels, s_row = summarise_data(t_labels, t_rows, spec)
+    except Exception as e:
+        s_labels = []
+        s_row = []
+        sys.stdout.flush()
+        click.echo('\rERROR  | while summarising file: {}'.format(e), 
+
+              err=True)
+    return s_labels, s_row
