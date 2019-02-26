@@ -6,6 +6,8 @@ This module should under no circumstances be imported to a another module
 in pysotope.
 '''
 
+# TODO: Refactor helper functions
+
 # pysotope - a package for inverting double spike isotope analysis data
 #
 #     Copyright (C) 2018 Trygvi Bech Arting
@@ -136,4 +138,54 @@ def reduce_data(overview_df, spec):
 
 
 
+@click.group()
+@click.option('-v', '--verbose', count=True)
+@click.pass_context
+def main(ctx, verbose):
+    if verbose:
+        print('Árgh')
+    else:
+        pass
 
+@main.command()
+@click.argument('datadir')
+@click.argument('listfile', required=False, default='./external_variables.xlsx')
+@click.pass_obj
+def init(ctx, datadir, listfile):
+    new_list = pst.filelist.append_to_list(datadir, listfile)
+    new_list.to_excel(listfile)
+
+@main.command()
+@click.argument('listfile')
+@click.argument('specfile', required=False)
+@click.argument('outfile', required=False)
+@click.pass_obj
+def invert(ctx, listfile, specfile, outfile):    
+    click.echo('running invert command')
+
+    if outfile is None:
+        outfile = './results'
+
+    if specfile is None:
+        spec = locate_spec_file()
+    elif os.path.isdir(specfile):
+        spec = locate_spec_file(specfile)
+    elif os.path.isfile(specfile):
+        spec = pst.read_json(specfile)
+    else:
+        spec = {}
+
+    if spec == {}:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+    else:
+        if os.path.isfile(listfile):
+            overview_df = pd.read_excel(listfile)
+            summaries, cycles = reduce_data(overview_df, spec)
+            summaries.to_excel(outfile + '.xlsx')
+            cycles.to_csv(outfile + '_cycles.csv')
+
+        else:
+            click.echo('ERROR  | Supplied list-file does not exist {}'.format(listfile), err=True, color='red')
+
+if __name__ == '__main__':
+    main()

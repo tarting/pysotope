@@ -111,7 +111,7 @@ def append_to_list(data_folder, list_file):
     run_data = find_raw_files(data_folder)
 
     if os.path.isfile(list_file):
-        file_df = pd.read_excel(list_file)
+        file_df = pd.read_excel(list_file, index_col=0)
         n_rows_to_add = len(file_df) - len(run_data)
         click.echo('STATUS | Adding {} files to existing list_file {}'.format(n_rows_to_add, list_file),
                 err=True)
@@ -136,7 +136,7 @@ def verify_file_list(file_df):
             pass
         else:
             click.echo('Error  | File not found at row {}: {}'.format(
-                i, row['filepath']), err=True, color='yellow')
+                i+2, row['filepath']), err=True, color='yellow')
             file_df = file_df.drop(idx)
 
     return file_df

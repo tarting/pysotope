@@ -23,7 +23,7 @@ setup(
          'pysotope/bin/xls2csv_macos_x86-64',
          'pysotope/bin/xls2csv.exe'])],
     install_requires=requirements,
-#    entry_points={
-#        'console_scripts': ['pynvert = pysotope.invert:main']
-#    },
+    entry_points={
+        'console_scripts': ['pysotope = pysotope.run:main']
+    },
 )
