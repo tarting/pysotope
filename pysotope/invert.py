@@ -347,7 +347,7 @@ def invert_data(data, file_spec):
 
 
 def gen_filter_function(iqr_limit, max_fraction):
-    def filter_data(data):
+    def filter_data(data, get_rejected_cycle_idx=False):
         '''
         Outlier rejection for satistics calculation.
         '''
@@ -358,16 +358,21 @@ def gen_filter_function(iqr_limit, max_fraction):
 
         data = sorted(data, key=lambda v: abs(v-np.mean(data)), reverse=True)
         filtered = []
+        rejected = []
         n = 0
-        for v in data:
+        for i, v in enumerate(data):
             if (n >= max_num):
                 filtered.append(v)
             elif (abs(v-mean) <= limit):
                 filtered.append(v)
             else:
                 n += 1
-
-        return np.array(filtered)
+                rejected.append(i)
+        if get_rejected_cycle_idx:
+            result = np.array(rejected)
+        else:
+            result = np.array(filtered)
+        return result
     return filter_data
 
 

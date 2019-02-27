@@ -95,6 +95,7 @@ def trim_table(t_columns, row):
 
 def reduce_data(overview_df, spec):
     # Need to add a fail case for missing spec file data
+    print(os.getcwd())
     overview_df = pst.filelist.verify_file_list(overview_df)
     all_data = {}
     all_summaries = {}
@@ -156,6 +157,42 @@ def init(ctx, datadir, listfile):
     new_list.to_excel(listfile)
 
 @main.command()
+@click.argument('resultfile')
+@click.argument('specfile', required=False)
+@click.argument('gfxdir', required=False, default='./GFX')
+@click.pass_obj
+def plot(ctx, resultfile, specfile, gfxdir):
+    if not os.path.isdir(gfxdir):
+        os.mkdir(gfxdir)
+
+    if specfile is None:
+        spec = locate_spec_file()
+    elif os.path.isdir(specfile):
+        spec = locate_spec_file(specfile)
+    elif os.path.isfile(specfile):
+        spec = pst.read_json(specfile)
+    else:
+        spec = {}
+
+    if spec == {}:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+    else:
+        if os.path.isfile(resultfile):
+            idx = resultfile.rfind('.')
+            result_base = resultfile[:idx]
+        else:
+            result_base = resultfile
+        summary_file = result_base + '.xlsx'
+        cycles_file = result_base + '_cycles.csv'
+
+        summary_df = pd.read_excel(summary_file, index_col=0)
+        cycle_df = pd.read_csv(cycles_file, index_col=0)
+
+        pst.generate_summaryplot(summary_df, spec, gfxdir)
+        pst.generate_cycleplots(cycle_df, spec, gfxdir)
+
+
+@main.command()
 @click.argument('listfile')
 @click.argument('specfile', required=False)
 @click.argument('outfile', required=False)
@@ -179,7 +216,7 @@ def invert(ctx, listfile, specfile, outfile):
         click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
     else:
         if os.path.isfile(listfile):
-            overview_df = pd.read_excel(listfile)
+            overview_df = pd.read_excel(listfile, index_col=0)
             summaries, cycles = reduce_data(overview_df, spec)
             summaries.to_excel(outfile + '.xlsx')
             cycles.to_csv(outfile + '_cycles.csv')

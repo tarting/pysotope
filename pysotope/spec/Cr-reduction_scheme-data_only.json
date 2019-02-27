@@ -1,35 +1,59 @@
-{ 
+{
   "description": "Data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 3112a, on the Phoenix and Isoprobe-T TIMS at the Geology Section, Department of Geoscience and Natural Resources, University of Copenhagen",
 
   "element" : "Cr",
 
-  "cycle_columns" : 
-    { "49" : 0, 
-      "50" : 1, 
-      "51" : 2, 
-      "52" : 3, 
-      "53" : 4, 
-      "54" : 5, 
-      "56" : 6 
+  "cycle_columns" :
+    { "49" : 0,
+      "50" : 1,
+      "51" : 2,
+      "52" : 3,
+      "53" : 4,
+      "54" : 5,
+      "56" : 6
     },
- 
-  "report_fracs" : 
+
+  "report_fracs" :
     ["52", ["50", "53", "54"]],
 
-  "reduce_fracs" : 
+  "reduce_fracs" :
     ["54", ["50", "52", "53"]],
-    
+
   "rel_report":
     {
         "d53Cr_SRM3112a" : ["53Cr", "52Cr", 1000, true]
     },
 
+  "plot_vars":
+    {
+      "2sigma_filter": 0.5,
+      "intens_min": 0.32,
+      "min_cycles": 30,
+      "summary":
+        [
+          "d53Cr_SRM3112a",
+          "raw_52",
+          "beta_ins",
+          "spl_conc",
+          ["raw_56", "raw_54"]
+        ],
+      "cycles":
+        [
+          "raw_52",
+          ["raw_50","raw_52"],
+          "soln_50Cr/52Cr",
+          "d53Cr_SRM3112a",
+          "beta_ins",
+          ["raw_56","raw_54"]
+        ]
+    },
+
   "used_isotopes" :
-    { 
+    {
       "50" : [["51", "V"]],
       "52" : [],
       "53" : [],
-      "54" : [["56", "Fe"]]    
+      "54" : [["56", "Fe"]]
     },
 
   "masses" :
@@ -77,11 +101,6 @@
 
   "initial_parameters":
     [ 0.003,-0.06,0.8 ],
-
-  "date":{
-    "field" : ["PARAMETERS", "Analysis Start Time"],
-    "parse_format" : "%A %d %B %Y %H:%M:%S",
-    "report_format" : "%Y-%m-%d %H:%M:%S"},
 
   "file_spec":
         {
