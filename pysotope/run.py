@@ -189,7 +189,7 @@ def plot(ctx, resultfile, specfile, gfxdir):
         cycle_df = pd.read_csv(cycles_file, index_col=0)
 
         pst.generate_summaryplot(summary_df, spec, gfxdir)
-        pst.generate_cycleplots(cycle_df, spec, gfxdir)
+        pst.generate_cycleplots(cycle_df, summary_df, spec, gfxdir)
 
 
 @main.command()

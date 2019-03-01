@@ -93,7 +93,12 @@ def generate_summaryplot(summaries_df, spec, figfolder='./GFX', **kwargs):
 
 
 
-def generate_cycleplots(cycle_df, spec, figfolder='./GFX', **kwargs):
+def generate_cycleplots(
+            cycle_df, 
+            summary_df, 
+            spec, 
+            figfolder='./GFX', 
+            **kwargs):
     plot_vars = spec['plot_vars']['cycles']
     
     filter_function = gen_filter_function(**spec['outlier_rejection'])
@@ -119,7 +124,8 @@ def generate_cycleplots(cycle_df, spec, figfolder='./GFX', **kwargs):
 
         # Enforce sorting of run numbers rather than using groupby
         run_numbers = sorted(list(bead_df['run_no'].unique()))
-
+        bead_summary_df = summary_df[summary_df['bead_id'] == bead_id]
+        bead_summary_df = bead_summary_df.set_index('run_no')
         for ax, ylab in zip(axes,
                             new_plot_vars):
             xs = [-1]
@@ -130,8 +136,11 @@ def generate_cycleplots(cycle_df, spec, figfolder='./GFX', **kwargs):
             rej_ys = []
             
             for run_no in run_numbers:
-                
+                run_summary_row = bead_summary_df.loc[run_no]
+
                 run_df = bead_df[bead_df.run_no == run_no].copy()
+                run_df = run_df.iloc[run_summary_row['first_row']-1:
+                                     run_summary_row['last_row']]
                 if len(run_df) <= 1:
                     continue
                 ys = run_df[ylab]
