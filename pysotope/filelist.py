@@ -42,6 +42,16 @@ def check_search_pattern(folder_pattern):
         click.echo(' | Found {} files'.format(len(run_files_all)), err=True, color='green')
     return run_files_all
 
+def extract_pattern(pattern):
+    def extract_func(f):
+        found = re.findall(pattern, f)
+        if len(found) > 0:
+            found = found[0]
+        else:
+            found = ''
+        return found
+    return extract_func
+
 def find_raw_files(folder_pattern):
     '''
     Extract info from filenames.
@@ -67,14 +77,11 @@ def find_raw_files(folder_pattern):
             lambda f: os.path.split(os.path.split(f)[0])[1])
 
     run_data['sample_text'] = run_data.filename.apply(
-            lambda f: re.findall(
-                '(^[\s\S]+)\ [0-9]+-[0-9][0-9]-[0-9]+', f)[0])
+            extract_pattern('(^[\s\S]+)\ [0-9]+-[0-9][0-9]-[0-9]+'))
     run_data['bead_id'] = run_data.filename.apply(
-            lambda f: re.findall(
-                '(^[\s\S]+\ [0-9]+-[0-9][0-9]-[0-9]+)', f)[0])
+            extract_pattern('(^[\s\S]+\ [0-9]+-[0-9][0-9]-[0-9]+)'))
     run_data['run_no'] = run_data.filename.apply(
-            lambda f: re.findall(
-                '([0-9][0-9])-[0-9]+$', f)[0])
+            extract_pattern('([0-9][0-9])-[0-9]+$'))
 
 
     # Extract date information
