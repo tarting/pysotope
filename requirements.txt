@@ -1,8 +1,8 @@
-numpy==1.16.1
-tqdm==4.31.1
-Click==7.0
-pandas==0.24.1
-scipy==1.2.1 
-xlrd==1.2.0 
-openpyxl==2.6.0 
-matplotlib==3.0.2
+numpy>=1.16.1
+tqdm>=4.31.1
+Click>=7.0
+pandas>=0.24.1
+scipy>=1.2.1
+xlrd>=1.2.0
+openpyxl>=2.6.0
+matplotlib>=3.0.2
