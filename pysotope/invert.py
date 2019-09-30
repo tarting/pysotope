@@ -27,17 +27,25 @@ Double spike inversion routines for pysotope.
 from collections import OrderedDict
 import json
 from math import ceil
+import warnings
 
 import numpy as np
 import scipy.optimize as opt
 import scipy.stats as stats
 
+np.seterr(all='raise')
 
 def exp_corr(R_initial, R_mass, frac_fact):
     '''
     Function for exponential mass bias correction.
     '''
-    return np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
+    with np.errstate(invalid='raise'):
+        try:
+            result = np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
+        except FloatingPointError:
+            result = np.array(np.nan)
+    
+    return result
     #return R_initial * np.exp(-frac_fact * np.log(R_mass))
 
 def gen_interf_func(m_corr, m_ref, interf_elem, file_spec):
@@ -201,8 +209,13 @@ def get_reduction_fun(file_spec):
             alpha, beta, lbda = alpha_beta_lambda
             q = spk_ratios * lbda
             # Refactor to use exp_corr function instead of explicit calculation
-            p = np.exp(np.log(meas_rat) - Pi_values * beta)
-            r = np.exp(np.log(std_ratios * (1-lbda)) - Pi_values * alpha)
+            with np.errstate(invalid='raise'):
+                try:
+                    p = np.exp(np.log(meas_rat) - Pi_values * beta)
+                    r = np.exp(np.log(std_ratios * (1-lbda)) - Pi_values * alpha)
+                except FloatingPointError:
+                    p = np.array(np.nan)
+                    r = np.array(np.nan)
             return q - p + r
         return fn
     
@@ -218,11 +231,14 @@ def get_reduction_fun(file_spec):
                 interfexpcorr_intensities, interfexpcorr_ratios = iexpcorr(row, beta)
                 
                 opt_fn = gen_fn(interfexpcorr_ratios)
-                
-                alpha_beta_lambda = opt.fsolve(opt_fn, alpha_beta_lambda_0)
 
+                with warnings.catch_warnings(): 
+                    warnings.simplefilter("error", RuntimeWarning) 
+                    try:
+                        alpha_beta_lambda = opt.fsolve(opt_fn, alpha_beta_lambda_0)
+                    except RuntimeWarning:
+                        alpha_beta_lambda = np.array([0,0,0])
                 beta = alpha_beta_lambda[1]
-
             results.append(
                 [*row, *alpha_beta_lambda, *interfexpcorr_intensities])
         return results
@@ -272,8 +288,10 @@ def invert_data(data, file_spec):
         num_str = '{}{}'.format(num, elem)
         ratio_lab = 'meas_{}/{}'.format(num_str, den_str)
         labels.append(ratio_lab)
-        results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
-
+        try:
+            results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
+        except FloatingPointError:
+            results[ratio_lab] = np.array(np.nan)
     # Calculate interference ratios
     for den, interfs in interferences.items():
         #interf_den_str = '{}{}'.format(den, 'raw')
@@ -443,5 +461,6 @@ def summarise_data(labels, results, file_spec):
         else:
             summary_labels.append(l)
             summary_data.append(results[l].mean())
+
 
     return summary_labels, summary_data
