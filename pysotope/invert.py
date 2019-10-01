@@ -24,18 +24,33 @@ Double spike inversion routines for pysotope.
 # encoding: utf-8
 
 
-from collections import OrderedDict
-import json
 from math import ceil
 import warnings
+from typing import List, Dict, Tuple, Any, Callable
+from collections import OrderedDict
 
 import numpy as np
 import scipy.optimize as opt
 import scipy.stats as stats
 
+
+Spec = Dict[str, Any]
+RowMx = np.ndarray
+Row = np.ndarray
+IntensRow = np.ndarray
+RatioRow = np.ndarray
+Column = np.ndarray
+AlphaBetaLambda = np.ndarray
+
+
 np.seterr(all='raise')
 
-def exp_corr(R_initial, R_mass, frac_fact):
+
+def exp_corr(
+        R_initial: float,
+        R_mass: float,
+        frac_fact: float,
+        ) -> float:
     '''
     Function for exponential mass bias correction.
     '''
@@ -44,11 +59,17 @@ def exp_corr(R_initial, R_mass, frac_fact):
             result = np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
         except FloatingPointError:
             result = np.array(np.nan)
-    
-    return result
-    #return R_initial * np.exp(-frac_fact * np.log(R_mass))
 
-def gen_interf_func(m_corr, m_ref, interf_elem, file_spec):
+    # return R_initial * np.exp(-frac_fact * np.log(R_mass))
+    return result
+
+
+def gen_interf_func(
+        m_corr: str,
+        m_ref: str,
+        interf_elem: str,
+        file_spec: Spec,
+        ) -> Callable[[float, float], float]:
     '''
     Generates one interference correction function based based on info
     from the spec_file "masses"; "nat_ratios"; and m_corr, m_ref and 
@@ -68,13 +89,18 @@ def gen_interf_func(m_corr, m_ref, interf_elem, file_spec):
     return corr_intensity
 
 
-def create_row_lookup(index):
+def create_row_lookup(
+        index: int,
+        ) -> Callable[[IntensRow, Any], float]:
     '''
     Function generator for element lookup. Takes an index and returns 
     a function which takes a row of raw analyses and returns the value
     at value index.
     '''
-    def raw_lookup(row, *args, **kwargs):
+    def raw_lookup(
+                row: IntensRow,
+                beta: Any = None
+                ) -> float:
         '''
         Takes a row, and returns value at index: {}
         '''.format(index)
@@ -82,7 +108,10 @@ def create_row_lookup(index):
     return raw_lookup
 
 
-def create_interf_corr(m_to_corr, file_spec):
+def create_interf_corr(
+        m_to_corr: int,
+        file_spec: Spec
+        ) -> Callable[[IntensRow, float], float]:
     '''
     Function generator for a single mass interference correction.
     Returns a function which takes a row and mass bias factor, 
@@ -91,56 +120,73 @@ def create_interf_corr(m_to_corr, file_spec):
     '''
     interf = file_spec['used_isotopes'][m_to_corr]
     interf_funcs = dict()
-    for m_ref, elem  in interf:
+    for m_ref, elem in interf:
         interf_funcs[m_ref] = gen_interf_func(
             m_to_corr,
             m_ref,
             elem,
             file_spec)
 
-    def interf_corr_row(row, beta):
+    def interf_corr_row(
+                row: IntensRow,
+                beta: float,
+                ) -> float:
         '''
         Corrects {} for interferences listed in "used_isotopes".
         '''.format(m_to_corr)
         i_m_to_corr = file_spec['cycle_columns'][m_to_corr]
-        v = row[i_m_to_corr]
+        value = row[i_m_to_corr]
         for k, fun in interf_funcs.items():
             i_m_reference = file_spec['cycle_columns'][k]
-            v -= fun(row[i_m_reference], beta)
-        return v
+            value -= fun(row[i_m_reference], beta)
+        return value
     return interf_corr_row
 
 
-def create_interf_corrfuncs(file_spec):
+def create_interf_corrfuncs(
+        file_spec: Spec
+        ) -> List[Callable[
+            [IntensRow, float],
+            float]]:
     '''
     Helper function for get_interf_corr.
     '''
     cols = file_spec['cycle_columns']
     interf = file_spec['used_isotopes']
     funcs = []
-    for c, i in cols.items():
-        if c in interf:
-            funcs.append(create_interf_corr(c, file_spec))
+    for column, i in cols.items():
+        if column in interf:
+            funcs.append(create_interf_corr(column, file_spec))
         else:
             funcs.append(create_row_lookup(i))
     return funcs
 
 
-def get_interf_corr(file_spec):
+def get_interf_corr(
+        file_spec: Spec,
+        ) -> Callable[[IntensRow, float], IntensRow]:
     '''
     Generate lookups and interference correction functions
     for all masses. Based on "used_isotopes", "masses", and
-    "nat_ratios" in file_spec. 
+    "nat_ratios" in file_spec.
     Returns a function which takes a data row and mass bias factor
     and returns an interference corrected row.
     '''
     funcs = create_interf_corrfuncs(file_spec)
-    def corr_row(row, beta):
-        return [f(row, beta) for f in funcs]
+
+    def corr_row(
+                row: IntensRow,
+                beta: float,
+                ) -> IntensRow:
+        return np.array([f(row, beta) for f in funcs])
     return corr_row
 
 
-def get_interf_corr_fun(file_spec):
+def get_interf_corr_fun(
+        file_spec: Spec
+        ) -> Callable[
+            [IntensRow, float],
+            Tuple[IntensRow, RatioRow]]:
     '''
     Returns a function wich takes a row and mass bias factor as
     arguments, and returns interfere corrected intensities and
@@ -151,61 +197,73 @@ def get_interf_corr_fun(file_spec):
     corr_fun = get_interf_corr(file_spec)
     column_indices = file_spec['cycle_columns']
     m_ref, m_others = file_spec['reduce_fracs']
-    corrected_masses = [i for c, i in column_indices.items() 
+    corrected_masses = [i for c, i in column_indices.items()
                         if c in file_spec['used_isotopes'].keys()]
     i_ref = column_indices[m_ref]
     i_others = [column_indices[m] for m in m_others]
-    def get_interf_corr_vals(row, beta):
+
+    def get_interf_corr_vals(
+                row: IntensRow,
+                beta: float,
+                ) -> Tuple[IntensRow, RatioRow]:
         iexpcorr = corr_fun(row, beta)
         val_ref = iexpcorr[i_ref]
         interfexpcorr_intensities = [iexpcorr[i] for i in corrected_masses]
         interfexpcorr_ratios = [iexpcorr[i]/val_ref for i in i_others]
+
         return interfexpcorr_intensities, interfexpcorr_ratios
-    
+
     return get_interf_corr_vals
 
 
-def get_reduction_fun(file_spec):
+def get_reduction_fun(
+        file_spec: Spec,
+        ) -> Callable[
+            [RowMx, List[int]],
+            RowMx]:
     """
-    Generates the data inversion function 
+    Generates the data inversion function
         "calculate_reduction(cycles, skip_rows=[])"
     Which takes all cycles, and reduces them. Returns a list of rows.
     """
 
     iexpcorr = get_interf_corr_fun(file_spec)
     alpha_beta_lambda_0 = np.array(file_spec['initial_parameters'])
-    
+
     elem = file_spec['element']
     red_denom, red_numerats = file_spec['reduce_fracs']
-    
+
     masses = file_spec['masses']
-    denom_mass = masses['{0}{1}'.format(red_denom,elem)]
+    denom_mass = masses['{0}{1}'.format(red_denom, elem)]
     mass_ratios = np.array([
-        masses['{0}{1}'.format(red_numer,elem)]/denom_mass
-                for red_numer in red_numerats
+        masses['{0}{1}'.format(red_numer, elem)]/denom_mass
+        for red_numer in red_numerats
     ])
+
     Pi_values = np.log(mass_ratios)
 
-    spk = file_spec['spike']
     spk_ratios = np.array([
-        spk['{1}{2}/{0}{2}'.format(red_denom,red_numer,elem)]
+        file_spec['spike']['{1}{2}/{0}{2}'.format(
+            red_denom, red_numer, elem)]
         for red_numer in red_numerats
     ])
-    
 
-    std = file_spec['standard']
     std_ratios = np.array([
-        std['{1}{2}/{0}{2}'.format(red_denom,red_numer,elem)]
+        file_spec['standard']['{1}{2}/{0}{2}'.format(
+            red_denom, red_numer, elem,)]
         for red_numer in red_numerats
     ])
 
-
-    def gen_fn(meas_rat):
+    def gen_fn(
+                meas_rat: RowMx,
+                ) -> Callable[[RowMx], float]:
         '''
         Generate cost function for gradient descent method.
         '''
 
-        def fn(alpha_beta_lambda):
+        def fn(
+                    alpha_beta_lambda: AlphaBetaLambda,
+                    ) -> float:
             alpha, beta, lbda = alpha_beta_lambda
             q = spk_ratios * lbda
             # Refactor to use exp_corr function instead of explicit calculation
@@ -219,7 +277,10 @@ def get_reduction_fun(file_spec):
             return q - p + r
         return fn
     
-    def calculate_reduction(cycles, skip_rows=[]):
+    def calculate_reduction(
+                cycles: RowMx,
+                skip_rows: List[int] = [],
+                ) -> RowMx:
         results = []
 
         for i, row in enumerate(cycles):
@@ -242,11 +303,13 @@ def get_reduction_fun(file_spec):
             results.append(
                 [*row, *alpha_beta_lambda, *interfexpcorr_intensities])
         return results
-    
+
     return calculate_reduction
 
 
-def generate_raw_labels(file_spec):
+def generate_raw_labels(
+        file_spec: Spec,
+        ) -> List[str]:
     '''
     Generates data labels for values returned by the 
     "calculate_reduction" function generated by "get_reduction_fun"
@@ -260,7 +323,11 @@ def generate_raw_labels(file_spec):
     return labels
 
 
-def invert_data(cycles, file_spec, columns=False):
+def invert_data(
+        cycles: RowMx,
+        file_spec: Spec,
+        columns: bool = False
+        ) -> Tuple[List[str], Dict[str, Column]]:
     '''
     Data inversion function.
     returns labels, and data in row major order.
@@ -369,8 +436,14 @@ def invert_data(cycles, file_spec, columns=False):
     return labels, results
 
 
-def gen_filter_function(iqr_limit, max_fraction):
-    def filter_data(data, get_rejected_cycle_idx=False):
+def gen_filter_function(
+        iqr_limit: float,
+        max_fraction: float
+        ) -> Callable[[Column, bool], Column]:
+    def filter_data(
+            data: Column,
+            get_rejected_cycle_idx: bool = False
+            ) -> Column:
         '''
         Outlier rejection for satistics calculation.
         '''
@@ -399,8 +472,17 @@ def gen_filter_function(iqr_limit, max_fraction):
     return filter_data
 
 
-def calc_stat(data_in: np.array, label,
-              mean=True, std=False, rsd=False, se=False, minim=False, maxim=False, N=False):
+def calc_stat(
+        data_in: Column,
+        label: str,
+        mean: bool = True,
+        std: bool = False,
+        rsd: bool = False,
+        se: bool = False,
+        minim: bool = False,
+        maxim: bool = False,
+        N: bool = False,
+        ) -> Tuple[List[str], Column]:
     '''
     Helper function for caluclating summary statistics.
     '''
@@ -430,7 +512,11 @@ def calc_stat(data_in: np.array, label,
     return labels_out, data_out
 
 
-def summarise_data(labels, results, file_spec):
+def summarise_data(
+        labels: List[str],
+        results: RowMx,
+        file_spec: Spec,
+        ) -> Tuple[List[str], List[float]]:
     '''
     Calculate sample statistics.
     Generates labels and a single row/series of summary data.
@@ -466,6 +552,5 @@ def summarise_data(labels, results, file_spec):
         else:
             summary_labels.append(l)
             summary_data.append(results[l].mean())
-
 
     return summary_labels, summary_data
