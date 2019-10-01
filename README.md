@@ -1,8 +1,8 @@
 # pysotope
 
-A command line tool for reducing Double Spike Isotope measurements
-acquired on the IsoprobeT and Phoenix instruments at the Geology Section
-at the University of Copenhagen. 
+A Python 3 module and command line tool for reducing Double Spike Isotope
+measurements acquired on the IsoprobeT and Phoenix instruments at the
+Geology Section at the University of Copenhagen. 
 
 
 # User guide
