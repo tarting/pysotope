@@ -33,14 +33,20 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.stats as stats
 
-
-Spec = Dict[str, Any]
-RowMx = np.ndarray
-Row = np.ndarray
-IntensRow = np.ndarray
-RatioRow = np.ndarray
-Column = np.ndarray
-AlphaBetaLambda = np.ndarray
+from pysotope.typedefs import (
+        List,
+        Dict,
+        Tuple,
+        Any,
+        Callable,
+        Spec,
+        RowMx,
+        Row,
+        IntensRow,
+        RatioRow,
+        Column,
+        AlphaBetaLambda,
+        )
 
 
 np.seterr(all='raise')

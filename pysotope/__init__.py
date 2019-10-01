@@ -21,10 +21,10 @@ pysotope - a package for inverting double spike isotope analysis data
 #     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-from datetime import datetime as dt
-from collections import namedtuple
 import os
 import sys
+from datetime import datetime as dt
+from collections import namedtuple, OrderedDict
 
 import click
 
@@ -33,50 +33,79 @@ from pysotope.invert import invert_data, summarise_data, exp_corr
 import pysotope.filelist as filelist
 from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
+from pysotope.typedefs import (
+        Data, Spec, Dict, Any, List, Callable, Tuple,)
 
-labeled = namedtuple('labeled', ['labels', 'data'])
-reduced = namedtuple('reduced', ['summary', 'data'])
+#labeled = namedtuple('labeled', ['labels', 'data'])
+#reduced = namedtuple('reduced', ['summary', 'data'])
 
 
-def get_xls_inverter_from_spec(file_spec):
-    def invert_xls(file_path):
+
+def get_xls_inverter_from_spec(
+        file_spec: Spec, 
+        ) -> Callable[[str], Data]:
+    '''
+    Get a data reducer from spec file.
+    '''
+    def invert_xls(
+            file_path: str,
+            ) -> Data:
+        '''
+        Reduce a file directly from xls
+        '''
         data = read_xls(file_path, file_spec)
-        labels, results = invert_data(data['CYCLES'], file_spec)
+        reduced = invert_data(data['CYCLES'], file_spec)
 
-        summary_labels, summary_results = summarise_data(labels, results, file_spec)
+        summary = summarise_data(cycles, file_spec)
         
-        summary_labels = ['file_path'] + summary_labels
-        summary_results = [file_path] + summary_results
+        summary['file_path'] = file_path
+        summary.move_to_end('file_path', last=False)
         
         summary_labels.append('file_spec_path')
         if 'file_spec_path' in file_spec:
-            summary_results.append(file_spec['file_spec_path'])
+            summary['file_spec_path'] = file_spec['file_spec_path']
         else: 
-            summary_results.append('N/A')
+            summary['file_spec_path'] = 'N/A'
 
-        summary_labels.append('proc_time')
-        summary_results.append(dt.now().strftime(file_spec['date']['report_format']))
+        summary['proc_time'] = dt.now().strftime(
+                file_spec['date']['report_format'])
+        
+        data['REDUCED'] = reduced
+        data['SUMMARY'] = summary
 
-        results = [*zip(*[list(results[l]) for l in labels])]\
-    
-        data['REDUCED'] = results
-        data['REDUCED_columns'] = labels
-
-        return reduced(labeled(summary_labels, summary_results), data)
+        return data
     return invert_xls
 
-def get_xls_inverter(file_spec_path):
+def get_xls_inverter(
+        file_spec_path: str,
+        ) -> Callable[[str], Data]:
+    '''
+    Get xls inverter from file spec path
+    '''
     file_spec = read_json(file_spec_path)
     file_spec['file_spec_path'] = file_spec_path
     return get_xls_inverter_from_spec(file_spec)
 
-def invert_from_paths(xls_path, file_spec_path):
+def invert_from_paths(
+        xls_path: str,
+        file_spec_path: str,
+        ) -> Data:
+    '''
+    Invert directly from xls and file spec path.
+    '''
     invert_xls = get_xls_inverter(file_spec_path)
     reduced = invert_xls(xls_path)
     return reduced
 
 
-def safe_read_file(filepath, spec):
+def safe_read_file(
+        filepath: str, 
+        spec: Spec,
+        ) -> Tuple[str, Data]:
+    '''
+    Read file while catching errors
+    Returns empty dict and prints warning for all other errors.
+    '''
     filename = os.path.split(filepath)[1][:-4]
     try: 
         data = read_xls(filepath, spec)
@@ -85,32 +114,45 @@ def safe_read_file(filepath, spec):
         click.echo('\rERROR  | while reading file {}: {}'.format(
 					click.format_filename(filepath), e), 
               err=True)
-        data = {}
+        data = OrderedDict()
     return filename, data
 
-def safe_invert_data(data, spec):
-    if data == {}:
-        labels = []
-        rows = []
-    else:
+def safe_invert_data(
+        data: Data,
+        spec: Spec,
+        ) -> Data:
+    '''
+    invert_data wrapped in try block.
+    Returns empty dict for empty supplied data and empty dict and prints 
+    warning for all other errors.
+    '''
+    if data: # Check if empty
         try:
-            labels, rows = invert_data(data['CYCLES'], spec)
+            reduced = invert_data(data['CYCLES'], spec)
         except Exception as e:
-            labels = []
-            rows = {}
             sys.stdout.flush()
             click.echo('\rERROR  | while reducing file: {}'.format(e), 
                   err=True)
-    return labels, rows
+            reduced = OrderedDict()
+    else:
+        reduced = OrderedDict()
+    return reduced
 
-def safe_summarise_data(t_labels, t_rows, spec):
+def safe_summarise_data(
+        reduced: Data,
+        spec: Spec,
+        ) -> Data:
+    '''
+    Summarise data wrapped in try block
+    Returns empty dict for empty supplied data and empty dict and prints 
+    warning for all other errors.
+    '''
     try: 
-        s_labels, s_row = summarise_data(t_labels, t_rows, spec)
+        summary = summarise_data(reduced, spec)
     except Exception as e:
-        s_labels = []
-        s_row = []
         sys.stdout.flush()
         click.echo('\rERROR  | while summarising file: {}'.format(e), 
-
               err=True)
-    return s_labels, s_row
+        summary = OrderedDict()
+    return summary
+

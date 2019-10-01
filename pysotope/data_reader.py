@@ -35,55 +35,72 @@ from functools import reduce
 import numpy as np
 
 from pysotope.exceptions import UndefinedDataDefinition, UnknownPlatform
+from pysotope.typedefs import Spec, Data, Any, List
+
 
 # Move to settings module, only used in the read_xls function
 # path to a converter which dumps the contents of an xls to stdout
 # as csv, appending all worksheets.
 # Currently using binary shipped with the Haskell xls module.
 if sys.platform == 'win32':
-    converter = 'xls2csv.exe'
+    CONVERTER = 'xls2csv.exe'
 elif sys.platform == 'darwin':
-    converter = 'xls2csv_macos_x86-64' 
+    CONVERTER = 'xls2csv_macos_x86-64'
 elif sys.platform == 'linux':
-    converter = 'xls2csv'
+    CONVERTER = 'xls2csv'
 else:
     raise UnknownPlatform('Platform [{}] unknown'.format(sys.platform))
-#converter_path = os.path.join(sys.prefix, 'pysotope','bin', converter) #os.path.abspath(converter_path)
 
-converter_path = os.path.abspath(os.path.join(
+
+CONVERTER_PATH = os.path.abspath(os.path.join(
         os.path.split(__file__)[0],
         'bin',
-        converter))
+        CONVERTER))
 
 
-print(converter_path)
-
-def read_json(file_path):
-    with open(file_path, 'r') as fh:
-        file_spec = json.load(fh)
+def read_json(
+        file_path: str,
+        ) -> Spec:
+    '''
+    Read json document to Spec
+    '''
+    with open(file_path, 'r') as file_handle:
+        file_spec = json.load(file_handle)
     return file_spec
 
 
-def xls_dump(converter_path, in_file, out_file=None):
+def xls_dump(
+        conv_path: str,
+        in_file: str,
+        out_file: str = None
+        ) -> str:
     '''
     Dumps the content of an xls document into a contiguous csv string.
     Optionally dumps the string into a UTF-8 formatted file.
     '''
     if os.path.isfile(in_file):
         in_path = os.path.abspath(in_file)
-        output = subprocess.check_output([converter_path ,in_path], universal_newlines=True)
+        output = subprocess.check_output(
+            [conv_path, in_path], universal_newlines=True)
         if out_file is not None:
-            with open(out_file,'w') as fh:
-                fh.write(output)
+            with open(out_file, 'w') as file_handle:
+                file_handle.write(output)
     else:
-        raise FileNotFoundError('Input file not found',in_file)
-    
+        raise FileNotFoundError('Input file not found', in_file)
+
     return output
 
 
-def get_table(contents, start_string, end_string, first_col, n_columns, skip_rows=1):
+def get_table(
+        contents: str,
+        start_string: str,
+        end_string: str,
+        first_col: int,
+        n_columns: int,
+        skip_rows: int = 1,
+        ) -> List[List[float]]:
     '''
-    Read a data table by reading keywords, gets set number of columns. 
+    Read a data table by reading keywords, gets set number of columns.
     Skips row with keyword by default.
     '''
     start = contents[:contents.find(start_string)].rfind('\n') + 1
@@ -97,7 +114,12 @@ def get_table(contents, start_string, end_string, first_col, n_columns, skip_row
     return table
 
 
-def get_keyword_row(contents, search_string, first_col, n_columns):
+def get_keyword_row(
+        contents: str,
+        search_string: str,
+        first_col: int,
+        n_columns: int,
+        ) -> List[str]:
     '''
     Read a row containing a keyword. For fetching headers.
     '''
@@ -105,23 +127,30 @@ def get_keyword_row(contents, search_string, first_col, n_columns):
     line = contents[start:]
     line = line[:line.find('\n')]
     line = line.split(',')
-    return line[first_col:first_col+n_columns]
+    return line[first_col:first_col + n_columns]
 
 
-def get_params(contents, labels, start_string):
+def get_params(
+        contents: str,
+        labels: List[str],
+        start_string: str,
+        ) -> List[str]:
     '''
     Read value following comma after keyword.
     '''
     ctrl = contents[contents.find(start_string):]
     results = []
-    for l in labels:
-        res = ctrl[ctrl.find(l):]
+    for label in labels:
+        res = ctrl[ctrl.find(label):]
         res = res[:res.find('\n')].split(',')[1]
         results.append(res)
     return results
 
 
-def read_spec(contents, spec):
+def read_spec(
+        contents: str,
+        spec: Spec,
+        ) -> Data:
     '''
     Parse a single table or parameter specification in a file_spec document. 
     '''
@@ -139,7 +168,10 @@ def read_spec(contents, spec):
     return data
 
 
-def distill_to_csv(contents, file_spec):
+def distill_to_csv(
+        contents: str,
+        file_spec: Spec
+        ) -> str:
     '''Takes xls csv dump and extracts data according to the given file specifications, returns a string'''
     aggregated = str()
     for k, spec in file_spec.items():
@@ -150,8 +182,15 @@ def distill_to_csv(contents, file_spec):
     return aggregated
 
 
-def parse_date(data, file_spec, as_datetime_object=False):
-    date_info = file_spec['date']
+def parse_date(
+        data: Data,
+        spec: Spec,
+        as_datetime_object: bool = False,
+        ) -> Any:
+    '''
+    Read date
+    '''
+    date_info = spec['date']
     date_fields = date_info['field']
     date_string = data
     for f in date_fields:
@@ -162,7 +201,11 @@ def parse_date(data, file_spec, as_datetime_object=False):
     return date
 
 
-def distill_to_dict(contents, file_spec, np_array=False):
+def distill_to_dict(
+        contents: str,
+        file_spec: Spec,
+        np_array: bool = False
+        ) -> Data:
     '''Takes xls csv dump and extracts data according to the given file specifications, returns a string'''
     aggregated = dict()
     for k, spec in file_spec.items():
@@ -179,13 +222,16 @@ def distill_to_dict(contents, file_spec, np_array=False):
     return aggregated
 
 
-
-def read_xls(file_path, file_spec):
+def read_xls(
+        file_path: str,
+        file_spec: Spec,
+        ) -> Data:
     '''
-    Parses a xls document at file_path into a python dictionary. 
+    Parses a xls document at file_path into a python dictionary.
     Given a file_spec in dict format.
     '''
-    contents = xls_dump(converter_path=converter_path, in_file=file_path, out_file=None)
+    contents = xls_dump(
+            conv_path=CONVERTER_PATH, in_file=file_path, out_file=None)
     distillate = distill_to_dict(contents, file_spec['file_spec'])
     if 'date' in file_spec:
         date_spec = file_spec['date']
