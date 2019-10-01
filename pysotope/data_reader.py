@@ -29,8 +29,9 @@ import os
 import sys
 import subprocess
 import json
-from datetime import datetime as dt
 from functools import reduce
+from datetime import datetime as dt
+from dateutil import parser as dtparser
 
 import numpy as np
 
@@ -182,25 +183,6 @@ def distill_to_csv(
     return aggregated
 
 
-def parse_date(
-        data: Data,
-        spec: Spec,
-        as_datetime_object: bool = False,
-        ) -> Any:
-    '''
-    Read date
-    '''
-    date_info = spec['date']
-    date_fields = date_info['field']
-    date_string = data
-    for f in date_fields:
-        date_string = date_string[f]
-    date = dt.strptime(date_string, date_info['parse_format'])
-    if not as_datetime_object:
-        date = date.strftime(date_info['report_format'])
-    return date
-
-
 def distill_to_dict(
         contents: str,
         file_spec: Spec,
@@ -212,7 +194,7 @@ def distill_to_dict(
         data = read_spec(contents, spec)
         spec_type = spec[0]
         if spec_type == 'table':
-            aggregated[k+'_columns'] = data[0] 
+            aggregated[k+'_columns'] = data[0]
             aggregated[k] = np.array(data[1:], dtype=float) if np_array else data[1:]
         elif spec_type == 'params':
             entry = dict()
@@ -221,6 +203,14 @@ def distill_to_dict(
             aggregated[k] = entry
     return aggregated
 
+def parse_date(
+        data: Data,
+        spec: Spec,
+        ) -> dt:
+    keys = spec['date']['field']
+    analysis_start_time = data[keys[0]][keys[1]]
+    dtobj = dtparser.parse(analysis_start_time)
+    return dtobj
 
 def read_xls(
         file_path: str,
@@ -231,16 +221,18 @@ def read_xls(
     Given a file_spec in dict format.
     '''
     contents = xls_dump(
-            conv_path=CONVERTER_PATH, in_file=file_path, out_file=None)
+        conv_path=CONVERTER_PATH, in_file=file_path, out_file=None)
     distillate = distill_to_dict(contents, file_spec['file_spec'])
+
     if 'date' in file_spec:
-        date_spec = file_spec['date']
-        v = distillate
-        for k in date_spec['field']:
-            v = v[k]
-        datetime_obj = dt.strptime(v, date_spec['parse_format'])
-        distillate['analysis_date'] = datetime_obj.strftime(date_spec['report_format'])
-        distillate['timestamp_analysis'] = datetime_obj.timestamp()
+        try:
+            fmt = file_spec['date']['report_format']
+            dtobj = parse_date(distillate, file_spec)
+            distillate['analysis_time'] = dtobj.strftime(fmt)
+            distillate['analysis_timestamp'] = dtobj.timestamp()
+        except KeyError as error:
+            print(error)
+
     distillate['raw_file'] = file_path
     distillate['CYCLES_N'] = len(distillate['CYCLES'])
     distillate['timestamp_readxls'] = dt.now().timestamp()
