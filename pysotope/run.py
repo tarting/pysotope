@@ -29,24 +29,36 @@ in pysotope.
 
 import sys
 import os
-from glob import glob
-import re
-import json
 import functools
+from glob import glob
+from collections import OrderedDict
 
 import click
-from tqdm import tqdm
 import pandas as pd
+from tqdm import tqdm
 
 import pysotope as pst
+from pysotope.typedefs import Spec, List, Tuple
 
-str_sum = lambda s: functools.reduce(lambda a, b: a+b, s)
+
+def str_sum(
+        strings: List[str]
+        ) -> str:
+    '''Join a list of strings'''
+    joined = functools.reduce(lambda a, b: a + b, strings)
+    return joined
 
 
-def read_list(list_file):
+def read_list(
+        list_file
+        ) -> pd.DataFrame:
     return pd.read_excel(list_file)
 
-def locate_spec_file(working_dir=None):
+
+def locate_spec_file(
+        working_dir: str = None
+        ) -> Spec:
+    '''Identify and read spec file'''
     if working_dir is None:
         working_dir = os.getcwd()
 
@@ -62,7 +74,13 @@ def locate_spec_file(working_dir=None):
     return spec
 
 
-def collate_cycles(all_data, summaries_df):
+def collate_cycles(
+        all_data: pd.DataFrame,
+        summaries_df: pd.DataFrame
+        ) -> pd.DataFrame:
+    '''
+    Append run and sample data to cycles
+    '''
     cycle_df = pd.DataFrame()
     click.echo('\rSTATUS | Collecting cycles ...', err=True)
     for k, v in tqdm(all_data.items()):
@@ -72,36 +90,40 @@ def collate_cycles(all_data, summaries_df):
         run_df['bead_id'] = summaries_df.loc[k, 'bead_id']
         run_df['run_no'] = summaries_df.loc[k, 'run_no']
         run_df['cycle'] = [i+1 for i in run_df.index]
-        
+
         run_df.index = ['{} {} {}'.format(b, r, c) for b, r, c in zip(run_df['bead_id'], run_df['run_no'], run_df['cycle'])]
-        
+
         cycle_df = cycle_df.append(run_df)
     return cycle_df
 
 
-def trim_table(t_columns, row):
-    new_table = {}
+def trim_table(
+        t_columns,
+        row,
+        ):
+    new_table = OrderedDict()
     first = row['first_row'] - 1
     end = row['last_row']
     for k, v in t_columns.items():
         n_rows = len(v)
         if n_rows < end:
             end = n_rows
-        
+
         new_table[k] = v[first:end]
     return new_table
 
-        
 
-def reduce_data(overview_df, spec):
+def reduce_data(
+        overview_df: pd.DataFrame,
+        spec: Spec
+        ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Need to add a fail case for missing spec file data
     print(os.getcwd())
     overview_df = pst.filelist.verify_file_list(overview_df)
-    all_data = {}
-    all_summaries = {}
+    all_data = OrderedDict()
+    all_summaries = OrderedDict()
     click.echo('STATUS | Processing data ...', err=True)
-    #no_read = []
-    s_labels = []
+    # no_read = []
     items = list(overview_df.iterrows())
     for k, row in tqdm(items):
         filepath = row['filepath']
@@ -109,27 +131,27 @@ def reduce_data(overview_df, spec):
             continue
         sys.stdout.flush()
         filename, data = pst.safe_read_file(filepath, spec)
-        t_labels, t_columns = pst.safe_invert_data(data, spec)
-        t_columns = trim_table(t_columns, row)
-        s_labels_temp, s_row = pst.safe_summarise_data(t_labels, t_columns, spec)        
+        reduced = pst.safe_invert_data(data['CYCLES'], spec)
+        reduced = trim_table(reduced, row)
+        summary = pst.safe_summarise_data(reduced, spec)
         # Make sure that the final labels list contains values.
         # Does not succeed if no data was reduced.
-        if s_labels == []:
-            s_labels = s_labels_temp
-        
-        if s_row != []:
-            s_row += list(overview_df.loc[filename])
-        if t_labels != []:
-            all_data[filename] = t_columns
-        
-        if s_labels_temp != []:
-            all_summaries[filename] = s_row 
-    
+
+        if summary:
+            summary.update(overview_df.loc[filename])
+            all_summaries[filename] = summary
+        if reduced:
+            all_data[filename] = reduced
+
     # Add filepath key to summary labels
-    s_labels += list(overview_df.columns)
+    s_labels = summary.keys()
     summaries_df = pd.DataFrame(all_summaries, index=s_labels).T
-    summaries_df['spl_conc'] = summaries_df.F_conc * summaries_df.spk_wt * summaries_df.spk_conc / summaries_df.spl_wt
-    
+    summaries_df['spl_conc'] = (
+        summaries_df.F_conc *
+        summaries_df.spk_wt *
+        summaries_df.spk_conc /
+        summaries_df.spl_wt)
+
     # Collect all cycles in a single dataframe
     cycles_df = collate_cycles(all_data, summaries_df)
 
@@ -142,9 +164,12 @@ def reduce_data(overview_df, spec):
 @click.group()
 @click.option('-v', '--verbose', count=True)
 @click.pass_context
-def main(ctx, verbose):
+def main(
+        ctx: dict,
+        verbose: bool
+        ) -> None:
     if verbose:
-        print('Árgh')
+        pass
     else:
         pass
 
@@ -152,7 +177,11 @@ def main(ctx, verbose):
 @click.argument('datadir')
 @click.argument('listfile', required=False, default='./external_variables.xlsx')
 @click.pass_obj
-def init(ctx, datadir, listfile):
+def init(
+        ctx: dict,
+        datadir: str,
+        listfile: str,
+        ) -> None:
     new_list = pst.filelist.append_to_list(datadir, listfile)
     new_list.to_excel(listfile)
 
@@ -161,7 +190,12 @@ def init(ctx, datadir, listfile):
 @click.argument('specfile', required=False)
 @click.argument('gfxdir', required=False, default='./GFX')
 @click.pass_obj
-def plot(ctx, resultfile, specfile, gfxdir):
+def plot(
+        ctx: dict,
+        resultfile: str,
+        specfile: str,
+        gfxdir: str
+        ) -> None:
     if not os.path.isdir(gfxdir):
         os.mkdir(gfxdir)
 
@@ -174,9 +208,7 @@ def plot(ctx, resultfile, specfile, gfxdir):
     else:
         spec = {}
 
-    if spec == {}:
-        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
-    else:
+    if spec:
         if os.path.isfile(resultfile):
             idx = resultfile.rfind('.')
             result_base = resultfile[:idx]
@@ -190,6 +222,8 @@ def plot(ctx, resultfile, specfile, gfxdir):
 
         pst.generate_summaryplot(summary_df, spec, gfxdir)
         pst.generate_cycleplots(cycle_df, summary_df, spec, gfxdir)
+    else:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
 
 
 @main.command()
@@ -197,7 +231,12 @@ def plot(ctx, resultfile, specfile, gfxdir):
 @click.argument('specfile', required=False)
 @click.argument('outfile', required=False)
 @click.pass_obj
-def invert(ctx, listfile, specfile, outfile):    
+def invert(
+        ctx: dict,
+        listfile: str,
+        specfile: str,
+        outfile
+        ) -> None:
     click.echo('running invert command')
 
     if outfile is None:
@@ -212,9 +251,7 @@ def invert(ctx, listfile, specfile, outfile):
     else:
         spec = {}
 
-    if spec == {}:
-        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
-    else:
+    if spec:
         if os.path.isfile(listfile):
             overview_df = pd.read_excel(listfile, index_col=0)
             summaries, cycles = reduce_data(overview_df, spec)
@@ -223,6 +260,9 @@ def invert(ctx, listfile, specfile, outfile):
 
         else:
             click.echo('ERROR  | Supplied list-file does not exist {}'.format(listfile), err=True, color='red')
+    else:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+
 
 if __name__ == '__main__':
     main()

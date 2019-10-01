@@ -31,10 +31,15 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 from pysotope.invert import gen_filter_function
+from pysotope.typedefs import Spec, Any
 
 
-
-def generate_summaryplot(summaries_df, spec, figfolder='./GFX', **kwargs):
+def generate_summaryplot(
+        summaries_df: pd.DataFrame,
+        spec: Spec,
+        figfolder: str = './GFX',
+        **kwargs: Any,
+        ) -> None:
     plot_vars = spec['plot_vars']['summary']
     n_diagrams = len(plot_vars)
     fig, axes = plt.subplots(1,n_diagrams,figsize=(12,8), sharey=True)
@@ -92,13 +97,13 @@ def generate_summaryplot(summaries_df, spec, figfolder='./GFX', **kwargs):
     plt.close(fig)
 
 
-
 def generate_cycleplots(
-            cycle_df, 
-            summary_df, 
-            spec, 
-            figfolder='./GFX', 
-            **kwargs):
+        cycle_df: pd.DataFrame,
+        summary_df: pd.DataFrame,
+        spec: Spec,
+        figfolder: str = './GFX',
+        **kwargs: Any,
+        ) -> None:
     plot_vars = spec['plot_vars']['cycles']
     
     filter_function = gen_filter_function(**spec['outlier_rejection'])

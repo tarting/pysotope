@@ -10,15 +10,16 @@ Geology Section at the University of Copenhagen.
 ## Installing
 
 Get a working install of python e.g. via the Anaconda python distribution
-(Used for testing on Windows10, MacOS Mojave, and Manjaro GNU/Linux). If
-using system python on GNU platforms it  is recommended to setup a virtual
-environment prior to installing.
+(Used for testing on Windows10, MacOS Mojave, and Manjaro GNU/Linux).
 
 Install the package by downloading/cloning this repository navigating to
 the cloned folder and running:
 
-``` 
-python setup.py install
+```sh
+# To clone (requires git)
+git clone https://github.com/tarting/pysotope
+cd pysotope
+python setup.py install --user
 ```
 
 This will install the packages listed in the requirements.txt file as well
@@ -31,7 +32,10 @@ reported, pysotope is installed correctly. Type ```exit() [return]``` to
 exit the python shell.
 
 
-## Using the software
+## Using the command-line tools
+
+These tools are specifically made for the instruments, naming-convention and
+workflow at the UCPH labs.
 
 Pysotope requires a specific directory structure, and works best if
 a separate folder is used per sample-set or project. The data_root directory
@@ -39,7 +43,7 @@ must contain one appropriate `.json` specification file and a folder
 containing the data as .xls files or .raw folders from the IsoWorks
 software. 
 
-```
+```sh
 | project_root/
 
     | Cd_data_root/
@@ -66,7 +70,7 @@ prompt on windows, or a terminal on MacOS and Linux.
 Navigate to the data_root directory using the `cd` commmand and launch the
 pysotope command in the following order.
 
-```
+```sh
 pysotope init 'data_dir'
 ```
 
@@ -80,7 +84,7 @@ through reruns of the init command. In this way you can add more data file
 by simply dropping them into the data directory an re-running the pysotope init
 command.
 
-```
+```sh
 pysotope invert 'external_variables.xlsx'
 ```
 
@@ -89,7 +93,7 @@ specification file to invert the double spike data, and produces
 a results.xlsx with summarized data for each run, and an
 results_cycles.csv containing each collected cycle for every run.
 
-```
+```sh
 pysotope plot results.xlsx
 ```
 
@@ -100,12 +104,59 @@ calculation as red crosses, as well as 2 standard deviation and standard
 error fields, for both individual runs and summarized across a bead run.
 
 
+## Using as a python module
 
 
 
+Import pysotope:
+```python
+import pysotope as pst
+```
+
+You still need to provide a specification file (described in previous
+section), to provide data external to the measurement.
+
+```python
+spec = pst.read_json('pysotope/spec/Cr-reduction-scheme-data_only.json')
+```
+
+Read the data such that each cycle represented as a list, np.array, or pd.Series
+of float values in a dictionary containing the key 'CYCLES'. Given an
+excel sheet, csv or pandas dataframe of the format:
+
+| Index | m49 | m50 | m51 | m52 | m53 | m54 | m56 |
+| ----: | --: | --: | --: | --: | --: | --: | --: |
+|     0 | 0.0 | 0.2 | 0.0 | 0.5 | 0.3 | 0.2 | 0.0 |
+|     1 | 0.0 | 0.3 | 0.0 | 0.6 | 0.4 | 0.3 | 0.0 |
+|     2 | 0.0 | 0.2 | 0.0 | 0.5 | 0.3 | 0.2 | 0.0 |
+|   ... | ... | ... | ... | ... | ... | ... | ... |
+|   120 | 0.0 | 0.2 | 0.0 | 0.5 | 0.3 | 0.2 | 0.0 |
+
+Where the the index of the data columns is specified in the spec_file, in
+this case with ```pd.read_[filetype](<file>, index_col=0)``` index of m49
+is 0 and m56 is 6. There can be any number of columns in the datafile as
+long as it is indexed correctly.
+
+```python
+import pandas as pd
+
+#               sample-ID note  Date-ISO   no-serial number
+df = pd.read('datadir/subdir/SPLID-015 500mV 2019-09-01 01-9999.xls', index_col=0)
+```
+
+Invert the data:
+
+```python
+tbl_lab, tbl_val = pst.invert_data(df.values, spec)
+```
+Where the type of tbl_lab is ```List[str]````and tbl_val is ```Dict[str,
+np.array[np.float64]]
 
 
-
+And summarise:
+```python
+sum_lab, sum_val = pst.summarise_data(tbl_lab, tbl_val)
+```
 
 
 
