@@ -107,7 +107,7 @@ def find_raw_files(folder_pattern):
     run_data['remarks'] = ''
     run_data['spl_wt'] = 1
     run_data['spk_wt'] = 1
-    run_data['spk_conc'] = 0.408093962 # Cd spike concentration
+    run_data['spk_conc'] = 1
 
     return run_data
 
