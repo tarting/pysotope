@@ -138,7 +138,7 @@ def reduce_data(
         # Does not succeed if no data was reduced.
 
         if summary:
-            summary.add(overview_df.loc[filename])
+            summary.update(overview_df.loc[filename])
             all_summaries[filename] = summary
         if reduced:
             all_data[filename] = reduced
@@ -179,7 +179,7 @@ def main(
 @click.pass_obj
 def init(
         ctx: dict,
-        datadir, str,
+        datadir: str,
         listfile: str,
         ) -> None:
     new_list = pst.filelist.append_to_list(datadir, listfile)
