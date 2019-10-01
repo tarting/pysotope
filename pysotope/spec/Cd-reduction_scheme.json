@@ -41,6 +41,28 @@
             true
         ]
     },
+    "plot_vars": {
+        "2sigma_filter": 5,
+        "intens_min": 0.05,
+        "min_cycles": 30,
+        "summary":
+          [
+            "e114Cd",
+            "raw_110",
+            "beta_ins",
+            "spl_conc",
+            ["raw_118", "raw_114"]
+          ],
+        "cycles":
+          [
+            "raw_110",
+            ["raw_108","raw_110"],
+            "soln_112Cd/110Cd",
+            "e114Cd",
+            "beta_ins",
+            ["raw_118","raw_114"]
+          ]
+    },
     "used_isotopes": {
         "106": [],
         "108": [],
@@ -252,7 +274,6 @@
             "PARAMETERS",
             "Analysis Start Time"
         ],
-        "parse_format": "%A %d %B %Y %H:%M:%S",
         "report_format": "%Y-%m-%d %H:%M:%S"
     },
     "file_spec": {

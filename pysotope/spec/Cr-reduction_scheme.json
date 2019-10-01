@@ -23,6 +23,30 @@
     {
         "d53Cr_SRM3112a" : ["53Cr", "52Cr", 1000, true]
     },
+  
+    "plot_vars":
+    {
+      "2sigma_filter": 0.5,
+      "intens_min": 0.32,
+      "min_cycles": 30,
+      "summary":
+        [
+          "d53Cr_SRM3112a",
+          "raw_52",
+          "beta_ins",
+          "spl_conc",
+          ["raw_56", "raw_54"]
+        ],
+      "cycles":
+        [
+          "raw_52",
+          ["raw_50","raw_52"],
+          "soln_50Cr/52Cr",
+          "d53Cr_SRM3112a",
+          "beta_ins",
+          ["raw_56","raw_54"]
+        ]
+    },
 
   "used_isotopes" :
     { 
@@ -79,10 +103,12 @@
     [ 0.003,-0.06,0.8 ],
 
   "date":{
-    "field" : ["PARAMETERS", "Analysis Start Time"],
-    "parse_format" : "%A %d %B %Y %H:%M:%S",
-    "report_format" : "%Y-%m-%d %H:%M:%S"},
-
+    "field" : [
+	"PARAMETERS",
+	"Analysis Start Time"
+    ],
+    "report_format": "%Y-%m-%d %H:%M:%S"
+  },
   "file_spec":
         {
         "PARAMETERS": [
