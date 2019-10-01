@@ -347,13 +347,14 @@ def invert_data(
     interferences = {k: v for k, v in file_spec['used_isotopes'].items() if len(v) > 0}
     nat_ratios = file_spec['nat_ratios']
 
-    results = {k:np.array(c) for k,c in zip(labels, zip(*reduced))}
+    results = OrderedDict()
+    for k, c in zip(labels, zip(*reduced)):
+        results[k] = np.array(c)
 
     # Get denominator value for ratios
     den, numerators = file_spec['report_fracs']
     den_col = results['meas_{}{}'.format(den, elem)]
     den_str = '{}{}'.format(den, elem)
-
 
     # Calculate measured interference corrected ratios
     for num in numerators:
@@ -364,9 +365,10 @@ def invert_data(
             results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
         except FloatingPointError:
             results[ratio_lab] = np.array(np.nan)
+
     # Calculate interference ratios
     for den, interfs in interferences.items():
-        #interf_den_str = '{}{}'.format(den, 'raw')
+        # interf_den_str = '{}{}'.format(den, 'raw')
         interf_den_col = results['raw_{}'.format(den)]
         for num, interf_elem in interfs:
             nat_rat = nat_ratios['{0}{2}/{1}{2}'.format(num, den, interf_elem)]
@@ -375,7 +377,6 @@ def invert_data(
             ratio_lab = 'interf_{}{}_ppm'.format(den, interf_elem)
             labels.append(ratio_lab)
             results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
-
 
     # Calculate solution ratios, instrument fract. corrected.
     for num in numerators:
@@ -395,7 +396,6 @@ def invert_data(
         mass_rat = masses[num_str]/masses[den_str]
         results[ratio_lab] = exp_corr(init_rat, mass_rat, results['alpha_nat'])
 
-
     # Calculate delta values
     rel_labels = []
     for rel_lab, (num_str, den_str, factor, _) in file_spec['rel_report'].items():
@@ -403,6 +403,7 @@ def invert_data(
         std = standard['{}/{}'.format(num_str,den_str)]
         spl = results['sample_{}/{}'.format(num_str,den_str)]
         results[rel_lab] = ((spl/std)-1)*factor
+        results.move_to_end(rel_lab, last=False)
     labels = rel_labels + labels
 
     # Calculate Q-value (i.e. Q_52Cr_54Cr for 52Cr spiked with 54Cr ratios)
@@ -433,7 +434,7 @@ def invert_data(
     mol_mass_spk = spike['amu']
     results['F_conc'] = results[Q_label] * abund_rep_spk * mol_mass_spl / (abund_rep_spl * mol_mass_spk)
 
-    return labels, results
+    return results
 
 
 def gen_filter_function(
@@ -513,44 +514,52 @@ def calc_stat(
 
 
 def summarise_data(
-        labels: List[str],
-        results: RowMx,
+        results: Dict[str, List[float]],
         file_spec: Spec,
-        ) -> Tuple[List[str], List[float]]:
+        ) -> Dict[str, float]:
     '''
     Calculate sample statistics.
     Generates labels and a single row/series of summary data.
     '''
-    summary_data = []
-    summary_labels = []
+
+    summary = OrderedDict()
     rel_report = file_spec['rel_report']
     filter_data = gen_filter_function(**file_spec['outlier_rejection'])
-    for l in labels:
-        if l in rel_report:
-            filtered = filter_data(results[l])
-            ls, res = calc_stat(filtered, l, mean=True, std=True, rsd=False, se=True, minim=False, maxim=False, N=True)
-            summary_labels += ls
-            summary_data += res
-            _,_,_,unfiltered = rel_report[l]
 
+    for label in results.keys():
+        if label in rel_report:
+            filtered = filter_data(results[label])
+            slabs, svals = calc_stat(
+                filtered, label,
+                mean=True, std=True, rsd=False, se=True,
+                minim=False, maxim=False, N=True)
+            for slab, val in zip(slabs, svals):
+                summary[slab] = val
+            _, _, _, unfiltered = rel_report[label]
             if unfiltered:
-                ls, res = calc_stat(results[l], l+'_unfiltered', mean=True, std=True, rsd=False, se=True, minim=False, maxim=False, N=True)
-                summary_labels += ls
-                summary_data += res
-        
-        elif 'raw_{}'.format(file_spec['report_fracs'][0]) == l:
-            ls, res = calc_stat(results[l], l, mean=True, std=True, rsd=False, se=False, minim=True, maxim=True, N=True)
-            summary_labels += ls
-            summary_data += res
-        elif 'raw' in l:
-            summary_labels.append(l)
-            summary_data.append(results[l].mean())
-        elif 'beta_ins' == l:
-            ls, res = calc_stat(results[l], l, mean=True, std=True, rsd=False, se=False, minim=False, maxim=False, N=False)
-            summary_labels += ls
-            summary_data += res
+                slabs, svals = calc_stat(
+                    results[label], label + '_unfiltered',
+                    mean=True, std=True, rsd=False, se=True,
+                    minim=False, maxim=False, N=True)
+                for slab, val in zip(slabs, svals):
+                    summary[slab] = val
+        elif label == 'raw_{}'.format(file_spec['report_fracs'][0]):
+            slabs, svals = calc_stat(
+                results[label], label,
+                mean=True, std=True, rsd=False, se=False,
+                minim=True, maxim=True, N=True)
+            for slab, val in zip(slabs, svals):
+                summary[slab] = val
+        elif 'raw' in label:
+            summary[label] = results[label].mean()
+        elif label == 'beta_ins':
+            slabs, svals = calc_stat(
+                results[label], label,
+                mean=True, std=True, rsd=False, se=False,
+                minim=False, maxim=False, N=False)
+            for slab, val in zip(slabs, svals):
+                summary[slab] = val
         else:
-            summary_labels.append(l)
-            summary_data.append(results[l].mean())
+            summary[label] = results[label].mean()
 
-    return summary_labels, summary_data
+    return summary
