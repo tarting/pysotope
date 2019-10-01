@@ -26,7 +26,6 @@ Double spike inversion routines for pysotope.
 
 from math import ceil
 import warnings
-from typing import List, Dict, Tuple, Any, Callable
 from collections import OrderedDict
 
 import numpy as np
