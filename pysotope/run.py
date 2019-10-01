@@ -109,7 +109,7 @@ def reduce_data(overview_df, spec):
             continue
         sys.stdout.flush()
         filename, data = pst.safe_read_file(filepath, spec)
-        t_labels, t_columns = pst.safe_invert_data(data, spec)
+        t_labels, t_columns = pst.safe_invert_data(data['CYCLES'], spec)
         t_columns = trim_table(t_columns, row)
         s_labels_temp, s_row = pst.safe_summarise_data(t_labels, t_columns, spec)        
         # Make sure that the final labels list contains values.

@@ -41,7 +41,7 @@ reduced = namedtuple('reduced', ['summary', 'data'])
 def get_xls_inverter_from_spec(file_spec):
     def invert_xls(file_path):
         data = read_xls(file_path, file_spec)
-        labels, results = invert_data(data, file_spec)
+        labels, results = invert_data(data['CYCLES'], file_spec)
 
         summary_labels, summary_results = summarise_data(labels, results, file_spec)
         
@@ -94,7 +94,7 @@ def safe_invert_data(data, spec):
         rows = []
     else:
         try:
-            labels, rows = invert_data(data, spec)
+            labels, rows = invert_data(data['CYCLES'], spec)
         except Exception as e:
             labels = []
             rows = {}

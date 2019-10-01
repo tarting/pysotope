@@ -260,18 +260,23 @@ def generate_raw_labels(file_spec):
     return labels
 
 
-def invert_data(data, file_spec):
+def invert_data(cycles, file_spec, columns=False):
     '''
     Data inversion function.
     returns labels, and data in row major order.
     '''
+
+    # Transpose data if provided in columns
+    if columns:
+        cycles = [*zip(*cycles)]
+
     cal_red = get_reduction_fun(file_spec)
     labels = generate_raw_labels(file_spec)
     masses = file_spec['masses']
     standard = file_spec['standard']
     spike = file_spec['spike']
     elem = file_spec['element']
-    reduced = cal_red(data['CYCLES'])
+    reduced = cal_red(cycles)
     interferences = {k: v for k, v in file_spec['used_isotopes'].items() if len(v) > 0}
     nat_ratios = file_spec['nat_ratios']
 
