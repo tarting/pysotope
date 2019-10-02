@@ -28,9 +28,16 @@ from collections import namedtuple, OrderedDict
 
 import click
 
+import pysotope.data_reader as data_reader
+import pysotope.diagrams as diagrams
+import pysotope.exceptions as exceptions
+import pysotope.filelist as filelist
+import pysotope.invert as invert
+import pysotope.run as run
+import pysotope.typedefs as typedefs
+
 from pysotope.data_reader import read_xls, read_json, parse_date
 from pysotope.invert import invert_data, summarise_data, exp_corr
-import pysotope.filelist as filelist
 from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
 from pysotope.typedefs import (
