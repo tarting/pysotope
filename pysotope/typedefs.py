@@ -22,7 +22,7 @@ Type definitions for pysotope
 #     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-from typing import Dict, Any, Tuple, List, Callable
+from typing import Dict, Any, Tuple, List, Callable, Union
 import numpy as np
 
 Spec = Dict[str, Any]
