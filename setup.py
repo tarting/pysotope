@@ -10,7 +10,7 @@ setup(
     name='pysotope',
     version='0.2.0-testing',
     description='Invert double spike isotope data.',
-    author='Trygvi Bech Arting',
+    author='Trygvi Bech Árting',
     author_email='trygvi@gmail.com',
     url='https://github.com/tarting/pysotope',
     license='GPL-2',
