@@ -8,7 +8,7 @@ requirements_handle.close()
 
 setup(
     name='pysotope',
-    version='0.1',
+    version='0.1.0',
     description='Invert double spike isotope data.',
     author='Trygvi Bech Arting',
     author_email='trygvi@gmail.com',
