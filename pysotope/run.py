@@ -29,6 +29,8 @@ in pysotope.
 
 import sys
 import os
+import re
+import shutil
 import functools
 from glob import glob
 from collections import OrderedDict
@@ -173,6 +175,64 @@ def main(
     else:
         pass
 
+def choose_file(files):
+    for i, file_path in enumerate(files):
+        file_name = os.path.split(file_path)[1]
+        click.echo('{:>3d}: {}'.format(i+1, file_name))
+    choice = click.prompt(
+        'Choose spec file, {}-{}'.format(1, len(files)),
+        default=0, type=int) - 1
+
+    try:
+        file_path = files[choice]
+    except IndexError:
+        file_path = ''
+
+    return file_path
+    
+
+def get_spec_from_store(spec_file):
+    old_sf = locate_spec_file()
+    
+    scr_path = os.path.split(__file__)[0]
+    spec_path = os.path.join(scr_path, 'spec')
+    click.echo(spec_path)
+    spec_files = sorted(glob(os.path.join(spec_path, '*.json')))
+    matches = []
+    if spec_file:
+        for file_path in spec_files:
+            m = re.findall(
+                    spec_file.lower(),
+                    file_path.lower())
+            if m:
+                matches.append(file_path)
+    if not matches:
+        matches = spec_files
+
+    if len(matches) == 1:
+        spec_file = matches[0]
+    if len(matches) >= 2:
+        spec_file = choose_file(matches)
+    else:
+        click.echo('No spec files were found in spec file folder:')
+        click.echo('{}'.format(spec_path), )
+        spec_file = ''
+
+    return spec_file
+
+
+@main.command()
+@click.argument('spec_file', required=False, default='')
+@click.pass_obj
+def spec(
+        ctx: dict,
+        spec_file: str,
+        ) -> None:
+    
+    spec_file = get_spec_from_store(spec_file)
+    if spec_file: 
+        shutil.copy2(spec_file, '.')
+
 @main.command()
 @click.argument('datadir')
 @click.argument('listfile', required=False, default='./external_variables.xlsx')
@@ -182,6 +242,11 @@ def init(
         datadir: str,
         listfile: str,
         ) -> None:
+    spec = locate_spec_file()
+    if not spec:
+        spec_file = get_spec_from_store('')
+        if spec_file:
+            shutil.copy2(spec_file, '.')
     new_list = pst.filelist.append_to_list(datadir, listfile)
     new_list.to_excel(listfile)
 
