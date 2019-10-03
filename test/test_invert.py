@@ -25,7 +25,6 @@ from pysotope.invert import (
 
 TEST_DIR = os.path.split(__file__)[0]
 with open(os.path.join(TEST_DIR, 'Cr-test-scheme.json'), 'r') as file_handle:
-
     SPEC = json.load(file_handle)
 
 
@@ -38,6 +37,7 @@ class TestExpCorr(unittest.TestCase):
         self.mass_ratio = 0.1
 
     def ref_fun(self, frac_fact):
+        '''Calculate reference exponent in non log space'''
         exponent = - frac_fact * np.log(self.mass_ratio)
         result = self.init_ratio * np.exp(exponent)
         return result
@@ -61,6 +61,15 @@ class TestExpCorr(unittest.TestCase):
         result = exp_corr(self.init_ratio, self.mass_ratio, frac_fact)
         ref = self.ref_fun(frac_fact)
         self.assertAlmostEqual(ref, result)
+
+
+class TestInvertData(unittest.TestCase):
+    '''
+    Test inversion. This is not a real unit-test since invert_data is a
+    complicated function and should be tested after all of its constituents.
+    '''
+    def setUp(self):
+        pass
 
 
 if __name__ == '__main__':
