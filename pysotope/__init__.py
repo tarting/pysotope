@@ -33,6 +33,7 @@ import pysotope.diagrams as diagrams
 import pysotope.exceptions as exceptions
 import pysotope.filelist as filelist
 import pysotope.invert as invert
+import pysotope.ratios as ratios
 import pysotope.run as run
 import pysotope.typedefs as typedefs
 

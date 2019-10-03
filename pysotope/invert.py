@@ -26,12 +26,10 @@ Double spike inversion routines for pysotope.
 # todo:
 # - invert_data should be refactored. 
 
-import sys
 from math import ceil
 import warnings
 from collections import OrderedDict
 
-import click
 import numpy as np
 import scipy.optimize as opt
 import scipy.stats as stats
@@ -50,6 +48,12 @@ from pysotope.typedefs import (
         RatioRow,
         Column,
         AlphaBetaLambda,
+        )
+from pysotope.ratios import (
+        calc_abund,
+        calc_amu,
+        calc_one_ratio,
+        calc_spec_ratios,
         )
 
 
@@ -226,99 +230,8 @@ def get_interf_corr_fun(
     return get_interf_corr_vals
 
 
-def calc_abund(
-        ratios: List[float],
-        ratios_key: str,
-        file_spec: Spec,
-        ) -> Dict[str, float]:
-    elem = file_spec['element']
-    denom, numerators = file_spec[ratios_key]
-    abund_denom = 1/(sum(ratios) + 1)
-
-    abund = dict()
-    abund[denom + elem] = abund_denom
-    for i, numer in enumerate(numerators):
-        abund[numer + elem] = ratios[i] * abund_denom
-
-    return abund
 
 
-def calc_amu(
-        abund: dict,
-        file_spec: Spec,
-        ) -> float:
-    '''
-    Calculate the relative atomic weight of all isotopes/.
-    '''
-    masses = file_spec['masses']
-    amu = sum([v * masses[k]
-               for k, v in abund.items()
-               if k != 'name'])
-    return amu
-
-
-def generate_ratios(
-        abund: Dict[str, float],
-        file_spec: Spec
-        ) -> Dict[str, float]:
-    '''
-    Generate all possible ratios and relative atomic weight
-    for an isotope composition given as relative abundances.
-    '''
-    comp = OrderedDict(abund)
-    comp['amu'] = calc_amu(abund, file_spec)
-    for denom in abund.keys():
-        if denom == 'name':
-            comp['name'] = abund['name']
-        else:
-            comp.update(
-                {'{}/{}'.format(k, denom): v / abund[denom]
-                 for k, v in abund.items()}
-            )
-    return comp
-
-
-def generate_isotope_labels(
-        element: str,
-        ratio_spec: List[Union[str, List[str]]],
-        ) -> List[str]:
-    ns = list(sorted([ratio_spec[0]] + ratio_spec[1]))
-    return [n + element for n in ns]
-
-
-def get_one_ratio(
-        reference_key: str,
-        numer_key: str,
-        denom_key: str,
-        file_spec: Spec,
-        ) -> float:
-    try:
-        numer_val = file_spec[reference_key][numer_key]
-        denom_val = file_spec[reference_key][denom_key]
-    except KeyError as msg:
-        click.echo(
-            'ERROR  | spec_file: Key missing for {} or {} in {}\n{}'.format(
-                    denom_key, numer_key, reference_key, msg),
-            err=True)
-        raise
-    return numer_val/denom_val
-
-
-def get_spec_ratios(
-        reference_key: str,
-        ratio_key: str,
-        file_spec: Spec,
-        ) -> np.array:
-    denom, numerators = file_spec[ratio_key]
-    ratios = np.ones(len(numerators))
-    denom_key = '{}{}'.format(denom, file_spec['element'])
-    for i, numer in enumerate(numerators):
-        numer_key = '{}{}'.format(numer, file_spec['element'])
-        ratio_val = get_one_ratio(
-                reference_key, numer_key, denom_key, file_spec)
-        ratios[i] *= ratio_val
-
-    return ratios
 
 
 def get_reduction_fun(
@@ -335,9 +248,9 @@ def get_reduction_fun(
     iexpcorr = get_interf_corr_fun(file_spec)
     alpha_beta_lambda_0 = np.array(file_spec['initial_parameters'])
 
-    mass_ratios = get_spec_ratios('masses', 'reduce_fracs', file_spec)
-    spk_ratios = get_spec_ratios('spike', 'reduce_fracs', file_spec)
-    std_ratios = get_spec_ratios('standard', 'reduce_fracs', file_spec)
+    mass_ratios = calc_spec_ratios('masses', 'reduce_fracs', file_spec)
+    spk_ratios = calc_spec_ratios('spike', 'reduce_fracs', file_spec)
+    std_ratios = calc_spec_ratios('standard', 'reduce_fracs', file_spec)
     Pi_values = np.log(mass_ratios)
 
     def gen_fn(
@@ -420,7 +333,7 @@ def calc_Qvalue(
         ) -> Tuple[str, float]:
     rep_iso = file_spec['report_fracs'][0] + file_spec['element']
     spk_iso = file_spec['reduce_fracs'][0] + file_spec['element']
-    spike_rat = get_one_ratio('spike', spk_iso, rep_iso, file_spec)
+    spike_rat = calc_one_ratio('spike', spk_iso, rep_iso, file_spec)
     soln_rat = results['soln_{}/{}'.format(spk_iso, rep_iso)]
     sample_rat = results['sample_{}/{}'.format(spk_iso, rep_iso)]
     Q_value = (
@@ -447,9 +360,9 @@ def invert_data(
 
     cal_red = get_reduction_fun(file_spec)
     labels = generate_raw_labels(file_spec)
-    mass_ratios = get_spec_ratios('masses', 'report_fracs', file_spec)
-    # spike_ratios = get_spec_ratios('spike', 'report_fracs', file_spec)
-    standard_ratios = get_spec_ratios('standard', 'report_fracs', file_spec)
+    mass_ratios = calc_spec_ratios('masses', 'report_fracs', file_spec)
+    # spike_ratios = calc_spec_ratios('spike', 'report_fracs', file_spec)
+    standard_ratios = calc_spec_ratios('standard', 'report_fracs', file_spec)
     # masses = file_spec['masses']
     # standard = file_spec['standard']
     # spike = file_spec['spike']
@@ -508,7 +421,7 @@ def invert_data(
     # Calculate delta values
     for rel_lab, (num_str, den_str, factor, _) \
             in file_spec['rel_report'].items():
-        std = get_one_ratio('standard', num_str, den_str, file_spec)
+        std = calc_one_ratio('standard', num_str, den_str, file_spec)
         spl = results['sample_{}/{}'.format(num_str, den_str)]
         results[rel_lab] = ((spl/std)-1)*factor
         results.move_to_end(rel_lab, last=False)
