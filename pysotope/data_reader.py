@@ -59,35 +59,6 @@ CONVERTER_PATH = os.path.abspath(os.path.join(
         CONVERTER))
 
 
-def generate_ratios(
-        abund: Dict[str, float],
-        spec: Spec
-        ) -> Dict[str, float]:
-    '''
-    Generate all possible ratios and relative atomic weight
-    for an isotope composition given as relative abundances.
-    '''
-    comp = OrderedDict(abund)
-    masses = spec['masses']
-    amu = sum([v * masses[k] for k, v in abund.items()])
-    comp['amu'] = amu
-    for denom in abund.keys():
-        comp.update(
-            { '{}/{}'.format(k, denom): v / abund[denom]
-                for k, v in abund.items()
-            }
-        )
-    return comp
-
-
-def generate_isotope_labels(
-        element: str,
-        ratio_spec: List[Union[str, List[str]]],
-        ) -> List[str]:
-    ns = list(sorted([ratio_spec[0]]+ ratio_spec[1]))
-    return [n + element for n in ns]
-
-
 def read_json(
         file_path: str,
         ) -> Spec:

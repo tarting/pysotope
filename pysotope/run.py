@@ -133,9 +133,9 @@ def reduce_data(
             continue
         sys.stdout.flush()
         filename, data = pst.safe_read_file(filepath, spec)
-        reduced = pst.safe_invert_data(data['CYCLES'], spec)
+        reduced = pst.invert_data(data['CYCLES'], spec)
         reduced = trim_table(reduced, row)
-        summary = pst.safe_summarise_data(reduced, spec)
+        summary = pst.summarise_data(reduced, spec)
         # Make sure that the final labels list contains values.
         # Does not succeed if no data was reduced.
 
