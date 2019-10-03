@@ -54,28 +54,11 @@ from pysotope.ratios import (
         calc_amu,
         calc_one_ratio,
         calc_spec_ratios,
+        exp_corr,
         )
 
 
 np.seterr(all='raise')
-
-
-def exp_corr(
-        R_initial: float,
-        R_mass: float,
-        frac_fact: float,
-        ) -> float:
-    '''
-    Function for exponential mass bias correction.
-    '''
-    with np.errstate(invalid='raise'):
-        try:
-            result = np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
-        except FloatingPointError:
-            result = np.array(np.nan)
-
-    # return R_initial * np.exp(-frac_fact * np.log(R_mass))
-    return result
 
 
 def gen_interf_func(
@@ -268,10 +251,10 @@ def get_reduction_fun(
             '''
             alpha, beta, lbda = alpha_beta_lambda
             q = spk_ratios * lbda
-            # Refactor to use exp_corr function instead of explicit calculation
             with np.errstate(invalid='raise'):
                 try:
-                    p = np.exp(np.log(meas_rat) - Pi_values * beta)
+                    # Changed - Pi_values to neg to get in-out beta to match
+                    p = np.exp(np.log(meas_rat) + Pi_values * beta)
                     r = np.exp(np.log(std_ratios * (1-lbda)) - Pi_values * alpha)
                 except FloatingPointError:
                     p = np.array(np.nan)
