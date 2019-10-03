@@ -117,66 +117,215 @@ class TestInvertData(unittest.TestCase):
         self.mix_nnpi = get_fract_mix(self.nn, self.pi)
         self.mix_nnni = get_fract_mix(self.nn, self.ni)
 
+        rCr_53_52_standard = SPEC['standard']['53Cr']/SPEC['standard']['52Cr']
+        rCr_53_52_mass = SPEC['masses']['53Cr']/SPEC['masses']['52Cr']
+        rCr_53_52_pn = ratios.exp_corr(
+            rCr_53_52_standard, rCr_53_52_mass, self.pn)
+        self.d53Cr_pn = ((rCr_53_52_pn/rCr_53_52_standard)-1) * 1e3
+        rCr_53_52_nn = ratios.exp_corr(
+            rCr_53_52_standard, rCr_53_52_mass, self.nn)
+        self.d53Cr_nn = ((rCr_53_52_nn/rCr_53_52_standard)-1) * 1e3
+
+
+
     def test_mix(self):
         '''Test mixture without any interference'''
         row = ratios.row_from_abund(self.mix, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-8)
         self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
 
     def test_0n0i(self):
         row = ratios.row_from_abund(self.mix_0n0i, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-8)
         self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
 
     def test_0npi(self):
         row = ratios.row_from_abund(self.mix_0npi, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-8)
         self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
 
     def test_0nni(self):
         row = ratios.row_from_abund(self.mix_0nni, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-8)
         self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
 
     def test_pn0i(self):
         row = ratios.row_from_abund(self.mix_pn0i, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
 
     def test_pnpi(self):
         row = ratios.row_from_abund(self.mix_pnpi, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
 
     def test_pnni(self):
         row = ratios.row_from_abund(self.mix_pnni, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
 
     def test_nn0i(self):
         row = ratios.row_from_abund(self.mix_nn0i, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-8)
 
     def test_nnpi(self):
         row = ratios.row_from_abund(self.mix_nnpi, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-8)
 
     def test_nnni(self):
         row = ratios.row_from_abund(self.mix_nnni, SPEC)
         results = invert_data([row], SPEC)
-        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-6)
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-8)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
+
+    def test_Fe_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_Fe_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Fe_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+    
+    def test_Fe_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_Fe_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Fe_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_Fe_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_Fe_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Fe_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'54': 0.01/frac_rat, '56': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+
 
 
 if __name__ == '__main__':
