@@ -120,9 +120,9 @@ section), to provide data external to the measurement.
 spec = pst.read_json('pysotope/spec/Cr-reduction-scheme-data_only.json')
 ```
 
-Read the data such that each cycle represented as a list, np.array, or pd.Series
-of float values in a dictionary containing the key 'CYCLES'. Given an
-excel sheet, csv or pandas dataframe of the format:
+Read the data such that each cycle represented as a list, numpy.array, or
+pd.Series of float values in a dictionary containing the key 'CYCLES'.
+Given an excel sheet, csv or pandas dataframe of the format:
 
 | Index | m49 | m50 | m51 | m52 | m53 | m54 | m56 |
 | ----: | --: | --: | --: | --: | --: | --: | --: |
@@ -132,7 +132,7 @@ excel sheet, csv or pandas dataframe of the format:
 |   ... | ... | ... | ... | ... | ... | ... | ... |
 |   120 | 0.0 | 0.2 | 0.0 | 0.5 | 0.3 | 0.2 | 0.0 |
 
-Where the the index of the data columns is specified in the spec_file, in
+Where the index of the data columns is specified in the spec-file, in
 this case with ```pd.read_[filetype](<file>, index_col=0)``` index of m49
 is 0 and m56 is 6. There can be any number of columns in the datafile as
 long as it is indexed correctly.
@@ -141,24 +141,28 @@ long as it is indexed correctly.
 import pandas as pd
 
 #               sample-ID note  Date-ISO   no-serial number
-df = pd.read('datadir/subdir/SPLID-015 500mV 2019-09-01 01-9999.xls', index_col=0)
+df = pd.read(
+    'datadir/subdir/SPLID-015 500mV 2019-09-01 01-9999.xls',
+    index_col=0)
 ```
 
 Invert the data:
 
 ```python
-tbl_lab, tbl_val = pst.invert_data(df.values, spec)
+reduced_cycles = pst.invert_data(df.values, spec)
 ```
-Where the type of tbl_lab is ```List[str]````and tbl_val is ```Dict[str,
-np.array[np.float64]]
+
+Where reduced_cycles is an OrderedDict with string index and 
+numpy.ndarray[float] values.
 
 
 And summarise:
 ```python
-sum_lab, sum_val = pst.summarise_data(tbl_lab, tbl_val)
+summary_statistics = pst.summarise_data(reduced_cycles, spec)
 ```
 
-
+Which is an OrderedDict with string index and float values. These can e.g.
+be joined into a pandas dataframe, or be written to a csv file.
 
 
 
