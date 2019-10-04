@@ -25,12 +25,14 @@ setup(
         'console_scripts': ['pysotope = pysotope.run:main']
     },
     classifiers=[
-        'Programming Language :: Python :: 3',
         'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS',
         'Operating System :: Microsoft :: Windows',
         'Topic :: Scientific/Engineering :: Chemistry',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     python_requires='>=3.6',
 )

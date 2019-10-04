@@ -3,3 +3,9 @@ include pysotope/spec/*.hjson
 include pysotope/bin/xls2csv
 include pysotope/bin/xls2csv_macos_x86-64
 include pysotope/bin/xls2csv.exe
+include pysotope/bin/xls2csv_LICENSE
+include requirements.txt
+include README.txt
+include LICENSE
+include LICENSE_xls2csv
+recursive-include extra *
