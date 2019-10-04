@@ -21,6 +21,9 @@ pysotope - a package for inverting double spike isotope analysis data
 #     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
+name = 'pysotope'
+
+
 import os
 import sys
 from datetime import datetime as dt
