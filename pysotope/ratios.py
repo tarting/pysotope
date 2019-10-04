@@ -55,6 +55,32 @@ def calc_abund(
     return abund
 
 
+def calc_spec_abund(
+        composition_key: str,
+        ratios_key: str,
+        file_spec: Spec,
+        ) -> Dict[str, float]:
+    '''
+    Calculate isotope abundance from ratios
+    '''
+    elem = file_spec['element']
+    composition = file_spec[composition_key]
+    denom, numerators = file_spec[ratios_key]
+    denom_key = denom + elem
+    ratios = []
+    for numer in numerators:
+        rat_key = '{}{}/{}'.format(numer, elem, denom_key)
+        ratios.append(composition[rat_key])
+
+    abund = calc_abund(ratios, ratios_key, file_spec)
+    if 'name' in composition:
+        abund['name'] = composition['name']
+    else:
+        abund['name'] = composition_key
+
+    return abund
+
+
 def mix_abund(
         abund_1: Dict[str, float],
         abund_2: Dict[str, float],

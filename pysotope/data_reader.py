@@ -35,6 +35,7 @@ from dateutil import parser as dtparser
 
 import numpy as np
 
+import pysotope.ratios as ratios
 from pysotope.exceptions import UndefinedDataDefinition, UnknownPlatform
 from pysotope.typedefs import Spec, Data, Any, List, Dict, Union
 
@@ -68,6 +69,30 @@ def read_json(
     with open(file_path, 'r') as file_handle:
         file_spec = json.load(file_handle)
     return file_spec
+
+
+def read_spec_file(
+        file_path: str,
+        ) -> Spec:
+    '''
+    Read reduction specification file
+    '''
+    spec = read_json(file_path)
+    if 'version' in spec:
+        version = spec['version']
+    else:
+        version = 1
+
+    if version == 1:
+        spike = ratios.calc_spec_abund(
+                'spike', 'report_fracs', spec)
+        spec['spike'] = spike
+
+        standard = ratios.calc_spec_abund(
+                'standard', 'report_fracs', spec)
+        spec['standard'] = standard
+
+    return spec
 
 
 def xls_dump(

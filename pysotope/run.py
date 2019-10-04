@@ -72,7 +72,7 @@ def locate_spec_file(
         spec = {}
     else:
         click.echo('       | using {}'.format(candidates[0]))
-        spec = pst.read_json(candidates[0])
+        spec = pst.read_spec_file(candidates[0])
     return spec
 
 
@@ -269,7 +269,7 @@ def plot(
     elif os.path.isdir(specfile):
         spec = locate_spec_file(specfile)
     elif os.path.isfile(specfile):
-        spec = pst.read_json(specfile)
+        spec = pst.read_spec_file(specfile)
     else:
         spec = {}
 
@@ -312,7 +312,7 @@ def invert(
     elif os.path.isdir(specfile):
         spec = locate_spec_file(specfile)
     elif os.path.isfile(specfile):
-        spec = pst.read_json(specfile)
+        spec = pst.read_spec_file(specfile)
     else:
         spec = {}
 

@@ -37,7 +37,7 @@ import pysotope.ratios as ratios
 import pysotope.run as run
 import pysotope.typedefs as typedefs
 
-from pysotope.data_reader import read_xls, read_json, parse_date
+from pysotope.data_reader import read_xls, read_spec_file, parse_date
 from pysotope.invert import invert_data, summarise_data, exp_corr
 from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
@@ -90,7 +90,7 @@ def get_xls_inverter(
     '''
     Get xls inverter from file spec path
     '''
-    file_spec = read_json(file_spec_path)
+    file_spec = read_spec(file_spec_path)
     file_spec['file_spec_path'] = file_spec_path
     return get_xls_inverter_from_spec(file_spec)
 
