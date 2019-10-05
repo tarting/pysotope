@@ -84,6 +84,7 @@ celerybeat-schedule
 
 # Environments
 .env
+.py3*
 .venv
 env/
 venv*/
