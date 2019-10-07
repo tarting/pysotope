@@ -257,6 +257,8 @@ def read_xls(
             distillate['analysis_timestamp'] = dtobj.timestamp()
         except KeyError as error:
             print(error)
+            distillate['analysis_time'] = ''
+            distillate['analysis_timestamp'] = 0
 
     distillate['raw_file'] = file_path
     distillate['CYCLES_N'] = len(distillate['CYCLES'])

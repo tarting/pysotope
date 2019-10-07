@@ -117,6 +117,10 @@ def write_cycles(
     cycles['bead_id'] = summary['bead_id']
     cycles['run_no'] = summary['run_no']
     cycles['cycle'] = [i+1 for i in cycles.index]
+
+    cycles['analysis_start_time'] = summary['analysis_time']
+    cycles['analysis_start_timestamp'] = summary['analysis_timestamp']
+
     cycles.index = [
         '{} {:2.0f} {}'.format(b, r, c)
         for b, r, c in zip(
@@ -170,6 +174,15 @@ def reduce_data(
         reduced = pst.invert_data(data['CYCLES'], spec)
         reduced = trim_table(reduced, row)
         summary = pst.summarise_data(reduced, spec)
+        try:
+            time = data['analysis_time']
+            timestamp = data['analysis_timestamp']
+        except KeyError:
+            time = ''
+            timestamp = 0.
+        summary['analysis_time'] = time
+        summary['analysis_timestamp'] = timestamp
+
         # Make sure that the final labels list contains values.
         # Does not succeed if no data was reduced.
 
