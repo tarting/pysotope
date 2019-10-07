@@ -81,7 +81,11 @@ def gen_interf_func(
     R_abund = file_spec['nat_ratios'][R_abund_label]
 
     def corr_intensity(ref_raw, beta_ins):
-        return ref_raw / exp_corr(R_abund, R_mass, beta_ins)
+        try:
+            result = ref_raw / exp_corr(R_abund, R_mass, beta_ins)
+        except FloatingPointError:
+            result = ref_raw * np.nan
+        return result
 
     return corr_intensity
 
@@ -250,7 +254,14 @@ def get_reduction_fun(
             Cost function for gradient descent
             '''
             alpha, beta, lbda = alpha_beta_lambda
-            q = spk_ratios * lbda
+            try:
+                q = spk_ratios * lbda
+            except FloatingPointError as e:
+                if 'underflow' in str(e):
+                    q = spk_ratios * 0
+                else:
+                    raise
+
             with np.errstate(invalid='raise'):
                 try:
                     # Changed - Pi_values to neg to get in-out beta to match
@@ -340,6 +351,16 @@ def invert_data(
     # Transpose data if provided in columns
     if columns:
         cycles = [*zip(*cycles)]
+    
+    zero_rows = []
+    for i, r in enumerate(cycles):
+        if sum(r) <= 0:
+            zero_rows.append(i)
+    for i in sorted(zero_rows, reverse=True):
+        del cycles[i]
+
+    if len(cycles) == 0:
+        return {}
 
     cal_red = get_reduction_fun(file_spec)
     labels = generate_raw_labels(file_spec)
@@ -372,7 +393,8 @@ def invert_data(
         try:
             results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
         except FloatingPointError:
-            results[ratio_lab] = np.array(np.nan)
+            results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
+            # results[ratio_lab] = np.array(np.nan)
 
     # Calculate interference ratios
     for den, interfs in interferences.items():
@@ -442,11 +464,12 @@ def gen_filter_function(
         '''
         Outlier rejection for satistics calculation.
         '''
+        data = np.array(data)
+        data = data[(~np.isnan(data)) & (~np.isinf(data))]
         mean = np.median(data)
         limit = iqr_limit * stats.iqr(data)
         N = len(data)
         max_num = ceil(N*max_fraction)
-
         data = sorted(data, key=lambda v: abs(v-np.mean(data)), reverse=True)
         filtered = []
         rejected = []
@@ -485,25 +508,46 @@ def calc_stat(
     labels_out = []
     if mean:
         labels_out.append(label)
-        data_out.append(data_in.mean())
+        try:
+            data_out.append(data_in.mean())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if std:
         labels_out.append(label+'_2STD')
-        data_out.append(2*data_in.std())
+        try:
+            data_out.append(2*data_in.std())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if rsd:
         labels_out.append(label+'_2RSD_ppm')
-        data_out.append(2e6*data_in.std()/data_out[label])
+        try:
+            data_out.append(2e6*data_in.std()/data_out[label])
+        except FloatingPointError:
+            data_out.append(np.nan)
     if se:
         labels_out.append(label+'_2SE')
-        data_out.append(2*data_in.std()/(len(data_in)**0.5))
+        try:
+            data_out.append(2*data_in.std()/(len(data_in)**0.5))
+        except FloatingPointError:
+            data_out.append(np.nan)
     if minim:
         labels_out.append(label+'_min')
-        data_out.append(data_in.min())
+        try:
+            data_out.append(data_in.min())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if maxim:
         labels_out.append(label+'_max')
-        data_out.append(data_in.max())
+        try:
+            data_out.append(data_in.max())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if N:
         labels_out.append(label+'_N')
-        data_out.append(len(data_in))
+        try:
+            data_out.append(len(data_in))
+        except FloatingPointError:
+            data_out.append(np.nan)
     return labels_out, data_out
 
 

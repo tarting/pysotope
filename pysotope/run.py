@@ -1,4 +1,5 @@
 '''
+        iry:
 pysotope - a package for inverting double spike isotope analysis data
 This module contains the commandline tool for running the data reduction
 procedure.
@@ -114,13 +115,11 @@ def trim_table(
         new_table[k] = v[first:end]
     return new_table
 
-
 def reduce_data(
         overview_df: pd.DataFrame,
         spec: Spec
         ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Need to add a fail case for missing spec file data
-    print(os.getcwd())
     overview_df = pst.filelist.verify_file_list(overview_df)
     all_data = OrderedDict()
     all_summaries = OrderedDict()
