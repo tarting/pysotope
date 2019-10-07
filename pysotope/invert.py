@@ -405,7 +405,11 @@ def invert_data(
             num_str = '{}{}'.format(num, interf_elem)
             interf_num_col = results['raw_{}'.format(num)]
             ratio_lab = 'interf_{}{}_ppm'.format(den, interf_elem)
-            results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
+            try:
+                results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
+            except FloatingPointError:
+                interf_den_col[interf_den_col == 0.0] = np.nan
+                results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
 
     # Calculate solution ratios, instrument fract. corrected.
     for i, num in enumerate(numerators):
