@@ -83,6 +83,7 @@ def collate_cycles(
         ) -> pd.DataFrame:
     '''
     Append run and sample data to cycles
+    Obsolete as of v0.2.2
     '''
     cycle_df = pd.DataFrame()
     click.echo('\rSTATUS | Collecting cycles ...', err=True)
@@ -99,6 +100,37 @@ def collate_cycles(
         cycle_df = cycle_df.append(run_df)
     return cycle_df
 
+
+# write_cycles(cycles_file, reduced, summary)
+def write_cycles(
+        cycles_file: str,
+        reduced: pd.DataFrame,
+        summary: pd.Series,
+        ) -> None:
+    '''
+    Append cycles to file.
+    '''
+    cycles = pd.DataFrame(reduced)
+
+    cycles['sample_id'] = summary['sample_id']
+    cycles['sample_text'] = summary['sample_text']
+    cycles['bead_id'] = summary['bead_id']
+    cycles['run_no'] = summary['run_no']
+    cycles['cycle'] = [i+1 for i in cycles.index]
+    cycles.index = [
+        '{} {:2.0f} {}'.format(b, r, c)
+        for b, r, c in zip(
+            cycles['bead_id'],
+            cycles['run_no'],
+            cycles['cycle'])
+        ]
+    if os.path.isfile(cycles_file):
+        with open(cycles_file, 'a') as file_handle:
+            cycles.to_csv(file_handle, header=False)
+    else:
+        cycles.to_csv(cycles_file)
+
+    return cycles
 
 def trim_table(
         t_columns,
@@ -117,11 +149,14 @@ def trim_table(
 
 def reduce_data(
         overview_df: pd.DataFrame,
-        spec: Spec
-        ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        spec: Spec,
+        cycles_file: str = None,
+        ) -> pd.DataFrame:
     # Need to add a fail case for missing spec file data
+    if os.path.isfile(cycles_file):
+        os.remove(cycles_file)
+
     overview_df = pst.filelist.verify_file_list(overview_df)
-    all_data = OrderedDict()
     all_summaries = OrderedDict()
     click.echo('STATUS | Processing data ...', err=True)
     # no_read = []
@@ -141,8 +176,9 @@ def reduce_data(
         if summary:
             summary.update(overview_df.loc[filename])
             all_summaries[filename] = summary
-        if reduced:
-            all_data[filename] = reduced
+        if bool(reduced) & (cycles_file is not None):
+            write_cycles(cycles_file, reduced, summary)
+            
 
     # Add filepath key to summary labels
     s_labels = summary.keys()
@@ -153,10 +189,7 @@ def reduce_data(
         summaries_df.spk_conc /
         summaries_df.spl_wt)
 
-    # Collect all cycles in a single dataframe
-    cycles_df = collate_cycles(all_data, summaries_df)
-
-    return summaries_df, cycles_df
+    return summaries_df
 
 
 
@@ -318,9 +351,11 @@ def invert(
     if spec:
         if os.path.isfile(listfile):
             overview_df = pd.read_excel(listfile, index_col=0)
-            summaries, cycles = reduce_data(overview_df, spec)
+            summaries = reduce_data(
+                overview_df,
+                spec,
+                cycles_file=outfile + '_cycles.csv')
             summaries.to_excel(outfile + '.xlsx')
-            cycles.to_csv(outfile + '_cycles.csv')
 
         else:
             click.echo('ERROR  | Supplied list-file does not exist {}'.format(listfile), err=True, color='red')
