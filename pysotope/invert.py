@@ -24,7 +24,7 @@ Double spike inversion routines for pysotope.
 # encoding: utf-8
 
 # todo:
-# - invert_data should be refactored. 
+# - invert_data should be refactored.
 
 from math import ceil
 import warnings
@@ -69,7 +69,7 @@ def gen_interf_func(
         ) -> Callable[[float, float], float]:
     '''
     Generates one interference correction function based based on info
-    from the spec_file "masses"; "nat_ratios"; and m_corr, m_ref and 
+    from the spec_file "masses"; "nat_ratios"; and m_corr, m_ref and
     interf_elem from "used_isotopes". Returns a function which
     takes the reference isotope raw_signal and instrumental fractionation
     factor producing the calculated interfering signal.
@@ -94,7 +94,7 @@ def create_row_lookup(
         index: int,
         ) -> Callable[[IntensRow, Any], float]:
     '''
-    Function generator for element lookup. Takes an index and returns 
+    Function generator for element lookup. Takes an index and returns
     a function which takes a row of raw analyses and returns the value
     at value index.
     '''
@@ -115,7 +115,7 @@ def create_interf_corr(
         ) -> Callable[[IntensRow, float], float]:
     '''
     Function generator for a single mass interference correction.
-    Returns a function which takes a row and mass bias factor, 
+    Returns a function which takes a row and mass bias factor,
     and returns a corrected value based on all interferences listed in
     "used_isotopes".
     '''
@@ -351,10 +351,15 @@ def invert_data(
     # Transpose data if provided in columns
     if columns:
         cycles = [*zip(*cycles)]
-    
+
     zero_rows = []
     for i, r in enumerate(cycles):
-        if sum(r) <= 0:
+        try:
+            if sum(r) <= 0:
+                zero_rows.append(i)
+        except TypeError as error:
+            # print(error)
+            # print('    ', r)
             zero_rows.append(i)
     for i in sorted(zero_rows, reverse=True):
         del cycles[i]
@@ -393,7 +398,11 @@ def invert_data(
         try:
             results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
         except FloatingPointError:
-            results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
+            new_den_col = den_col.copy()
+            for i, v in enumerate(den_col):
+                if v == 0:
+                    new_den_col[i] = np.nan
+            results[ratio_lab] = (results['meas_{}'.format(num_str)]/new_den_col)
             # results[ratio_lab] = np.array(np.nan)
 
     # Calculate interference ratios
@@ -456,6 +465,14 @@ def invert_data(
 
     return results
 
+def calc_conc(
+            F_conc: float,
+            wt_spk: float,
+            C_spk: float,
+            wt_spl: float
+            ) -> float:
+    '''Calculate sample concentration'''
+    return F_conc * wt_spk * C_spk / wt_spl
 
 def gen_filter_function(
         iqr_limit: float,

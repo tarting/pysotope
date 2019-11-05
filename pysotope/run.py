@@ -156,7 +156,7 @@ def reduce_data(
         spec: Spec,
         cycles_file: str = None,
         ) -> pd.DataFrame:
-    # Need to add a fail case for missing spec file data
+    #TODO: Need to add a fail case for missing spec file data
     if os.path.isfile(cycles_file):
         os.remove(cycles_file)
 
@@ -191,7 +191,7 @@ def reduce_data(
             all_summaries[filename] = summary
         if bool(reduced) & (cycles_file is not None):
             write_cycles(cycles_file, reduced, summary)
-            
+
 
     # Add filepath key to summary labels
     s_labels = summary.keys()
@@ -234,11 +234,11 @@ def choose_file(files):
         file_path = ''
 
     return file_path
-    
+
 
 def get_spec_from_store(spec_file):
     old_sf = locate_spec_file()
-    
+
     scr_path = os.path.split(__file__)[0]
     spec_path = os.path.join(scr_path, 'spec')
     click.echo(spec_path)
@@ -273,9 +273,9 @@ def spec(
         ctx: dict,
         spec_file: str,
         ) -> None:
-    
+
     spec_file = get_spec_from_store(spec_file)
-    if spec_file: 
+    if spec_file:
         shutil.copy2(spec_file, '.')
 
 @main.command()

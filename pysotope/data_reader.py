@@ -136,7 +136,10 @@ def get_table(
     table = [l.split(',') for l in table]
     table = [l for l in table if len(reduce(lambda a, b: a+b, l)) > 0]
     table = [l[first_col:first_col+n_columns] for l in table[skip_rows:]]
-    table = [[float(v) for v in r] for r in table]
+    try:
+        table = [[float(v) for v in r] for r in table]
+    except ValueError:
+        table = [[v for v in r] for r in table]
     return table
 
 
@@ -256,7 +259,7 @@ def read_xls(
             distillate['analysis_time'] = dtobj.strftime(fmt)
             distillate['analysis_timestamp'] = dtobj.timestamp()
         except KeyError as error:
-            print(error)
+            #print(error)
             distillate['analysis_time'] = ''
             distillate['analysis_timestamp'] = 0
 

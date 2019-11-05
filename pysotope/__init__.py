@@ -41,7 +41,7 @@ import pysotope.run as run
 import pysotope.typedefs as typedefs
 
 from pysotope.data_reader import read_xls, read_spec_file, parse_date
-from pysotope.invert import invert_data, summarise_data, exp_corr
+from pysotope.invert import invert_data, summarise_data, exp_corr, calc_conc
 from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
 from pysotope.typedefs import (
@@ -53,7 +53,7 @@ from pysotope.typedefs import (
 
 
 def get_xls_inverter_from_spec(
-        file_spec: Spec, 
+        file_spec: Spec,
         ) -> Callable[[str], Data]:
     '''
     Get a data reducer from spec file.
@@ -68,19 +68,19 @@ def get_xls_inverter_from_spec(
         reduced = invert_data(data['CYCLES'], file_spec)
 
         summary = summarise_data(cycles, file_spec)
-        
+
         summary['file_path'] = file_path
         summary.move_to_end('file_path', last=False)
-        
+
         summary_labels.append('file_spec_path')
         if 'file_spec_path' in file_spec:
             summary['file_spec_path'] = file_spec['file_spec_path']
-        else: 
+        else:
             summary['file_spec_path'] = 'N/A'
 
         summary['proc_time'] = dt.now().strftime(
                 file_spec['date']['report_format'])
-        
+
         data['REDUCED'] = reduced
         data['SUMMARY'] = summary
 
@@ -110,7 +110,7 @@ def invert_from_paths(
 
 
 def safe_read_file(
-        filepath: str, 
+        filepath: str,
         spec: Spec,
         ) -> Tuple[str, Data]:
     '''
@@ -118,12 +118,12 @@ def safe_read_file(
     Returns empty dict and prints warning for all other errors.
     '''
     filename = os.path.split(filepath)[1][:-4]
-    try: 
+    try:
         data = read_xls(filepath, spec)
     except Exception as e:
         sys.stdout.flush()
         click.echo('\rERROR  | while reading file {}: {}'.format(
-					click.format_filename(filepath), e), 
+					click.format_filename(filepath), e),
               err=True)
         data = OrderedDict()
     return filename, data
@@ -134,7 +134,7 @@ def safe_invert_data(
         ) -> Data:
     '''
     invert_data wrapped in try block.
-    Returns empty dict for empty supplied data and empty dict and prints 
+    Returns empty dict for empty supplied data and empty dict and prints
     warning for all other errors.
     '''
     if data: # Check if empty
@@ -142,7 +142,7 @@ def safe_invert_data(
             reduced = invert_data(data['CYCLES'], spec)
         except Exception as e:
             sys.stdout.flush()
-            click.echo('\rERROR  | while reducing file: {}'.format(e), 
+            click.echo('\rERROR  | while reducing file: {}'.format(e),
                   err=True)
             reduced = OrderedDict()
     else:
@@ -155,15 +155,14 @@ def safe_summarise_data(
         ) -> Data:
     '''
     Summarise data wrapped in try block
-    Returns empty dict for empty supplied data and empty dict and prints 
+    Returns empty dict for empty supplied data and empty dict and prints
     warning for all other errors.
     '''
-    try: 
+    try:
         summary = summarise_data(reduced, spec)
     except Exception as e:
         sys.stdout.flush()
-        click.echo('\rERROR  | while summarising file: {}'.format(e), 
+        click.echo('\rERROR  | while summarising file: {}'.format(e),
               err=True)
         summary = OrderedDict()
     return summary
-

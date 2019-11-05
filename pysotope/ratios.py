@@ -156,7 +156,7 @@ def calc_amu(
     masses = file_spec['masses']
     amu = sum([v * masses[k]
                for k, v in abund.items()
-               if k != 'name'])
+               if re.match('[0-9]+[A-Z][a-z]?', k)])
     return amu
 
 
@@ -272,7 +272,6 @@ def fractionate_abund(
         mass_ratio = masses[numer_key] / masses[denom_key]
         frac_rat = exp_corr(ratios[i], mass_ratio, frac_fact)
         new_ratios[i] = frac_rat
-    
+
     fract_abund = calc_abund(new_ratios, ratio_key, file_spec)
     return fract_abund
-
