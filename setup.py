@@ -10,7 +10,7 @@ with open('README.md', 'r') as readme_handle:
 
 setup(
     name='pysotope',
-    version='0.2.1',
+    version='0.2.2',
     description='Invert double spike isotope data.',
     long_description=long_description,
     long_description_content_type='text/markdown',
