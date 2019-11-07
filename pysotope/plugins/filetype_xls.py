@@ -237,3 +237,5 @@ def read_file(
     distillate['CYCLES_N'] = len(distillate['CYCLES'])
     distillate['timestamp_readxls'] = dt.now().timestamp()
     return distillate
+
+FILETYPE_EXTENSION = '.xls'

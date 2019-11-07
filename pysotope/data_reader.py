@@ -78,6 +78,7 @@ def check_plugin_exists(module_name):
 class DataReader(object):
 
     def __init__(self, spec):
+        self.extension = None
         self.filetype_plugin = spec['filetype_plugin']
         self.load_spec(spec)
 
@@ -92,6 +93,7 @@ class DataReader(object):
             self.filetype_module = importlib.import_module(
                 name='{}'.format(plugin_name),
             )
+            self.extension = self.filetype_module.FILETYPE_EXTENSION
 
         else:
             print('Error: Module {} not found'.format(plugin_name))
