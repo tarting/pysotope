@@ -40,7 +40,8 @@ import pysotope.ratios as ratios
 import pysotope.run as run
 import pysotope.typedefs as typedefs
 
-from pysotope.data_reader import read_xls, read_spec_file, parse_date
+                                            # read_xls is deprecated
+from pysotope.data_reader import DataReader, read_spec_file, read_xls
 from pysotope.invert import invert_data, summarise_data, exp_corr, calc_conc
 from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
@@ -52,19 +53,20 @@ from pysotope.typedefs import (
 
 
 
-def get_xls_inverter_from_spec(
+def get_file_inverter_from_spec(
         file_spec: Spec,
         ) -> Callable[[str], Data]:
     '''
     Get a data reducer from spec file.
     '''
-    def invert_xls(
+    def invert_file(
             file_path: str,
             ) -> Data:
         '''
-        Reduce a file directly from xls
+        Reduce a file directly
         '''
-        data = read_xls(file_path, file_spec)
+        file_reader = DataReader(spec)
+        data = file_reader(file_path)
         reduced = invert_data(data['CYCLES'], file_spec)
 
         summary = summarise_data(cycles, file_spec)
@@ -85,27 +87,27 @@ def get_xls_inverter_from_spec(
         data['SUMMARY'] = summary
 
         return data
-    return invert_xls
+    return invert_file
 
-def get_xls_inverter(
+def get_file_inverter(
         file_spec_path: str,
         ) -> Callable[[str], Data]:
     '''
-    Get xls inverter from file spec path
+    Get file inverter from file spec path
     '''
     file_spec = read_spec(file_spec_path)
     file_spec['file_spec_path'] = file_spec_path
-    return get_xls_inverter_from_spec(file_spec)
+    return get_file_inverter_from_spec(file_spec)
 
 def invert_from_paths(
-        xls_path: str,
+        file_path: str,
         file_spec_path: str,
         ) -> Data:
     '''
-    Invert directly from xls and file spec path.
+    Invert directly from file and file spec path.
     '''
-    invert_xls = get_xls_inverter(file_spec_path)
-    reduced = invert_xls(xls_path)
+    invert_file = get_file_inverter(file_spec_path)
+    reduced = invert_file(file_path)
     return reduced
 
 
@@ -119,7 +121,8 @@ def safe_read_file(
     '''
     filename = os.path.split(filepath)[1][:-4]
     try:
-        data = read_xls(filepath, spec)
+        file_reader = DataReader(spec)
+        data = file_reader(file_path)
     except Exception as e:
         sys.stdout.flush()
         click.echo('\rERROR  | while reading file {}: {}'.format(
