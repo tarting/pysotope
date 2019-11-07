@@ -122,7 +122,7 @@ def safe_read_file(
     filename = os.path.split(filepath)[1][:-4]
     try:
         file_reader = DataReader(spec)
-        data = file_reader(file_path)
+        data = file_reader(filepath)
     except Exception as e:
         sys.stdout.flush()
         click.echo('\rERROR  | while reading file {}: {}'.format(
