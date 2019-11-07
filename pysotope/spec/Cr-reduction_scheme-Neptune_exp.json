@@ -104,15 +104,13 @@
     [ 0.003,-0.06,0.8 ],
   
   "filetype_plugin":
-        "pysotope.plugins.filetype_neptune_ext",
+        "pysotope.plugins.filetype_neptune_exp",
 
   "file_spec":
         {
-        "PLUGIN": "neptune_exp",
         "PARAMETERS": [
             "params",
             {
-                "start_string": "Neptune Analysis Data Report",
                 "labels": [
                     "Filename",
                     "Date",
@@ -140,8 +138,8 @@
         "CYCLES": [
             "table",
             {
-                "start_string": "Cycle Time",
-                "end_string": "\n***",
+                "start_string": "Cycle",
+                "end_string": "***",
                 "first_col": 2,
                 "n_columns": 7,
                 "skip_rows": 1
