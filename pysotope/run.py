@@ -281,18 +281,33 @@ def spec(
 @main.command()
 @click.argument('datadir')
 @click.argument('listfile', required=False, default='./external_variables.xlsx')
+@click.argument('specfile', required=False, default=None)
 @click.pass_obj
 def init(
         ctx: dict,
         datadir: str,
         listfile: str,
+        specfile: str,
         ) -> None:
-    spec = locate_spec_file()
+    if specfile is None:
+        spec = locate_spec_file()
+        if not spec:
+            spec_file = get_spec_from_store('')
+            if spec_file:
+                shutil.copy2(spec_file, '.')
+        spec = locate_spec_file()
+    else:
+        spec = pst.read_spec_file(specfile)
     if not spec:
-        spec_file = get_spec_from_store('')
-        if spec_file:
-            shutil.copy2(spec_file, '.')
-    new_list = pst.filelist.append_to_list(datadir, listfile)
+        sys.exit(1)
+
+
+    reader = pst.DataReader(spec)
+    new_list = pst.filelist.append_to_list(
+            datadir,
+            listfile,
+            extension=reader.extension,
+    )
     new_list.to_excel(listfile)
 
 @main.command()

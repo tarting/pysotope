@@ -32,10 +32,10 @@ from glob import glob
 import pandas as pd
 import click
 
-def check_search_pattern(folder_pattern):
+def check_search_pattern(folder_pattern, extension='.xls'):
     click.echo('STATUS | Searching: {}'.format(folder_pattern), err=True, nl=False)
     run_files_all = glob(folder_pattern)
-    run_files_all = [f for f in run_files_all if '.xls' == f[-4:]]
+    run_files_all = [f for f in run_files_all if extension == f[-len(extension):]]
     if len(run_files_all) == 0:
         click.echo(' | No data-files found'.format(folder_pattern),err=True, color='red')
     else:
@@ -52,17 +52,22 @@ def extract_pattern(pattern):
         return found
     return extract_func
 
-def find_raw_files(folder_pattern):
+def find_raw_files(folder_pattern, extension='.xls'):
     '''
     Extract info from filenames.
     '''
 
     # Find all data files
-    run_files_all = check_search_pattern(folder_pattern)
+    run_files_all = check_search_pattern(folder_pattern, extension)
     if run_files_all == []:
-        run_files_all = check_search_pattern(os.path.join(folder_pattern, '*/*.xls'))
+        run_files_all = check_search_pattern(
+                os.path.join(folder_pattern, '*/*{}'.format(extension)),
+                extension,
+        )
         if run_files_all == []:
-            run_files_all = check_search_pattern(os.path.join(folder_pattern, '*.xls'))
+            run_files_all = check_search_pattern(
+                    os.path.join(folder_pattern, '*{}'.format(extension)),
+                    extension)
             if run_files_all == []:
                 click.echo('Error  | No data-files found.', err=True, color='red', bold=True)
 
@@ -111,11 +116,11 @@ def find_raw_files(folder_pattern):
 
     return run_data
 
-def append_to_list(data_folder, list_file):
+def append_to_list(data_folder, list_file, extension='.xls'):
     '''
     Check for existing list_file and append new data if possible.
     '''
-    run_data = find_raw_files(data_folder)
+    run_data = find_raw_files(data_folder, extension)
 
     if os.path.isfile(list_file):
         file_df = pd.read_excel(list_file, index_col=0)
@@ -125,7 +130,7 @@ def append_to_list(data_folder, list_file):
         for i, row in run_data.iterrows():
             if i not in file_df.index:
                 file_df.loc[i] = row
-        final_list = file_df 
+        final_list = file_df
     else:
         click.echo('STATUS | File {} not found, generating new list_file.', err=True)
         final_list = run_data
