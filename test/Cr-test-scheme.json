@@ -1,5 +1,5 @@
 {
-  "description": "Data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 3112a, on the Phoenix and Isoprobe-T TIMS at the Geology Section, Department of Geoscience and Natural Resources, University of Copenhagen",
+  "description": "Testing data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 3112a, on the Phoenix and Isoprobe-T TIMS at the Geology Section, Department of Geoscience and Natural Resources, University of Copenhagen",
 
   "element" : "Cr",
 
