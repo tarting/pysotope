@@ -24,7 +24,7 @@ Double spike inversion routines for pysotope.
 # encoding: utf-8
 
 # todo:
-# - invert_data should be refactored. 
+# - invert_data should be refactored.
 
 from math import ceil
 import warnings
@@ -69,7 +69,7 @@ def gen_interf_func(
         ) -> Callable[[float, float], float]:
     '''
     Generates one interference correction function based based on info
-    from the spec_file "masses"; "nat_ratios"; and m_corr, m_ref and 
+    from the spec_file "masses"; "nat_ratios"; and m_corr, m_ref and
     interf_elem from "used_isotopes". Returns a function which
     takes the reference isotope raw_signal and instrumental fractionation
     factor producing the calculated interfering signal.
@@ -81,7 +81,11 @@ def gen_interf_func(
     R_abund = file_spec['nat_ratios'][R_abund_label]
 
     def corr_intensity(ref_raw, beta_ins):
-        return ref_raw / exp_corr(R_abund, R_mass, beta_ins)
+        try:
+            result = ref_raw / exp_corr(R_abund, R_mass, beta_ins)
+        except FloatingPointError:
+            result = ref_raw * np.nan
+        return result
 
     return corr_intensity
 
@@ -90,7 +94,7 @@ def create_row_lookup(
         index: int,
         ) -> Callable[[IntensRow, Any], float]:
     '''
-    Function generator for element lookup. Takes an index and returns 
+    Function generator for element lookup. Takes an index and returns
     a function which takes a row of raw analyses and returns the value
     at value index.
     '''
@@ -111,7 +115,7 @@ def create_interf_corr(
         ) -> Callable[[IntensRow, float], float]:
     '''
     Function generator for a single mass interference correction.
-    Returns a function which takes a row and mass bias factor, 
+    Returns a function which takes a row and mass bias factor,
     and returns a corrected value based on all interferences listed in
     "used_isotopes".
     '''
@@ -250,7 +254,14 @@ def get_reduction_fun(
             Cost function for gradient descent
             '''
             alpha, beta, lbda = alpha_beta_lambda
-            q = spk_ratios * lbda
+            try:
+                q = spk_ratios * lbda
+            except FloatingPointError as e:
+                if 'underflow' in str(e):
+                    q = spk_ratios * 0
+                else:
+                    raise
+
             with np.errstate(invalid='raise'):
                 try:
                     # Changed - Pi_values to neg to get in-out beta to match
@@ -341,6 +352,21 @@ def invert_data(
     if columns:
         cycles = [*zip(*cycles)]
 
+    zero_rows = []
+    for i, r in enumerate(cycles):
+        try:
+            if sum(r) <= 0:
+                zero_rows.append(i)
+        except TypeError as error:
+            # print(error)
+            # print('    ', r)
+            zero_rows.append(i)
+    for i in sorted(zero_rows, reverse=True):
+        del cycles[i]
+
+    if len(cycles) == 0:
+        return {}
+
     cal_red = get_reduction_fun(file_spec)
     labels = generate_raw_labels(file_spec)
     mass_ratios = calc_spec_ratios('masses', 'report_fracs', file_spec)
@@ -372,7 +398,12 @@ def invert_data(
         try:
             results[ratio_lab] = (results['meas_{}'.format(num_str)]/den_col)
         except FloatingPointError:
-            results[ratio_lab] = np.array(np.nan)
+            new_den_col = den_col.copy()
+            for i, v in enumerate(den_col):
+                if v == 0:
+                    new_den_col[i] = np.nan
+            results[ratio_lab] = (results['meas_{}'.format(num_str)]/new_den_col)
+            # results[ratio_lab] = np.array(np.nan)
 
     # Calculate interference ratios
     for den, interfs in interferences.items():
@@ -383,7 +414,11 @@ def invert_data(
             num_str = '{}{}'.format(num, interf_elem)
             interf_num_col = results['raw_{}'.format(num)]
             ratio_lab = 'interf_{}{}_ppm'.format(den, interf_elem)
-            results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
+            try:
+                results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
+            except FloatingPointError:
+                interf_den_col[interf_den_col == 0.0] = np.nan
+                results[ratio_lab] = 1e6*(interf_num_col/interf_den_col)/nat_rat
 
     # Calculate solution ratios, instrument fract. corrected.
     for i, num in enumerate(numerators):
@@ -430,6 +465,14 @@ def invert_data(
 
     return results
 
+def calc_conc(
+            F_conc: float,
+            wt_spk: float,
+            C_spk: float,
+            wt_spl: float
+            ) -> float:
+    '''Calculate sample concentration'''
+    return F_conc * wt_spk * C_spk / wt_spl
 
 def gen_filter_function(
         iqr_limit: float,
@@ -442,11 +485,12 @@ def gen_filter_function(
         '''
         Outlier rejection for satistics calculation.
         '''
+        data = np.array(data)
+        data = data[(~np.isnan(data)) & (~np.isinf(data))]
         mean = np.median(data)
         limit = iqr_limit * stats.iqr(data)
         N = len(data)
         max_num = ceil(N*max_fraction)
-
         data = sorted(data, key=lambda v: abs(v-np.mean(data)), reverse=True)
         filtered = []
         rejected = []
@@ -485,25 +529,46 @@ def calc_stat(
     labels_out = []
     if mean:
         labels_out.append(label)
-        data_out.append(data_in.mean())
+        try:
+            data_out.append(data_in.mean())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if std:
         labels_out.append(label+'_2STD')
-        data_out.append(2*data_in.std())
+        try:
+            data_out.append(2*data_in.std())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if rsd:
         labels_out.append(label+'_2RSD_ppm')
-        data_out.append(2e6*data_in.std()/data_out[label])
+        try:
+            data_out.append(2e6*data_in.std()/data_out[label])
+        except FloatingPointError:
+            data_out.append(np.nan)
     if se:
         labels_out.append(label+'_2SE')
-        data_out.append(2*data_in.std()/(len(data_in)**0.5))
+        try:
+            data_out.append(2*data_in.std()/(len(data_in)**0.5))
+        except FloatingPointError:
+            data_out.append(np.nan)
     if minim:
         labels_out.append(label+'_min')
-        data_out.append(data_in.min())
+        try:
+            data_out.append(data_in.min())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if maxim:
         labels_out.append(label+'_max')
-        data_out.append(data_in.max())
+        try:
+            data_out.append(data_in.max())
+        except FloatingPointError:
+            data_out.append(np.nan)
     if N:
         labels_out.append(label+'_N')
-        data_out.append(len(data_in))
+        try:
+            data_out.append(len(data_in))
+        except FloatingPointError:
+            data_out.append(np.nan)
     return labels_out, data_out
 
 

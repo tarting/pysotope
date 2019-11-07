@@ -29,7 +29,13 @@ def exp_corr(
         try:
             result = np.exp(np.log(R_initial) - frac_fact * np.log(R_mass))
         except FloatingPointError:
-            result = np.array(np.nan)
+            if hasattr(R_initial, '__iter__'):
+                result = R_initial.copy()
+                for i, (R, F) in enumerate(zip(R_initial, frac_fact)):
+                    # Recursive
+                    result[i] = exp_corr(R, R_mass, F)
+            else:
+                result = np.nan
 
     # return R_initial * np.exp(-frac_fact * np.log(R_mass))
     return result
@@ -46,11 +52,21 @@ def calc_abund(
     elem = file_spec['element']
     denom, numerators = file_spec[ratios_key]
     abund_denom = 1/(sum(ratios) + 1)
-
     abund = dict()
     abund[denom + elem] = abund_denom
     for i, numer in enumerate(numerators):
-        abund[numer + elem] = ratios[i] * abund_denom
+        if hasattr(abund_denom, '__iter__'):
+            new_ratios = np.ones(abund_denom.shape)
+            for i, (rat, denom) in enumerate(zip(ratios[i], abund_denom)):
+                if denom == 0:
+                    new_ratios[i] = np.nan
+                elif rat == np.inf:
+                    new_ratios[i] = np.nan
+                else:
+                    new_ratios[i] = rat * denom
+            abund[numer + elem] = new_ratios
+        else:
+            abund[numer + elem] = ratios[i] * abund_denom
 
     return abund
 
@@ -140,7 +156,7 @@ def calc_amu(
     masses = file_spec['masses']
     amu = sum([v * masses[k]
                for k, v in abund.items()
-               if k != 'name'])
+               if re.match('[0-9]+[A-Z][a-z]?', k)])
     return amu
 
 
@@ -256,7 +272,6 @@ def fractionate_abund(
         mass_ratio = masses[numer_key] / masses[denom_key]
         frac_rat = exp_corr(ratios[i], mass_ratio, frac_fact)
         new_ratios[i] = frac_rat
-    
+
     fract_abund = calc_abund(new_ratios, ratio_key, file_spec)
     return fract_abund
-

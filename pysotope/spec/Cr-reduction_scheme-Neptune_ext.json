@@ -1,0 +1,153 @@
+{ 
+  "version": 2,
+  "description": "Data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 979, on the Thermo-Fisher Neptune at Rutgers University Geocemistry Lab",
+
+  "element" : "Cr",
+
+  "cycle_columns" : 
+    { "49" : 0, 
+      "50" : 1, 
+      "51" : 2, 
+      "52" : 3, 
+      "53" : 4, 
+      "54" : 5, 
+      "56" : 6 
+    },
+ 
+  "report_fracs" : 
+    ["52", ["50", "53", "54"]],
+
+  "reduce_fracs" : 
+    ["54", ["50", "52", "53"]],
+    
+  "rel_report":
+    {
+        "d53Cr_SRM3112a" : ["53Cr", "52Cr", 1000, true]
+    },
+  
+    "plot_vars":
+    {
+      "2sigma_filter": 0.5,
+      "intens_min": 0.32,
+      "min_cycles": 30,
+      "summary":
+        [
+          "d53Cr_SRM979",
+          "raw_52",
+          "beta_ins",
+          "spl_conc",
+          ["raw_56", "raw_54"]
+        ],
+      "cycles":
+        [
+          "raw_52",
+          ["raw_50","raw_52"],
+          "soln_50Cr/52Cr",
+          "d53Cr_SRM3112a",
+          "beta_ins",
+          ["raw_56","raw_54"]
+        ]
+    },
+
+  "used_isotopes" :
+    { 
+      "50" : [["51", "V"]],
+      "52" : [],
+      "53" : [],
+      "54" : [["56", "Fe"]]    
+    },
+
+  "masses" :
+    { "50Cr" : 49.946049,
+      "52Cr" : 51.940512,
+      "53Cr" : 52.940653,
+      "54Cr" : 53.938885,
+      "49Ti" : 48.947871,
+      "50Ti" : 49.944792,
+      "51V"  : 50.943964,
+      "50V"  : 49.947163,
+      "54Fe" : 53.939613,
+      "56Fe" : 55.934941},
+
+  "nat_ratios" :
+    { "49Ti/50Ti" :   1.0185185185,
+      "51V/50V"   : 399.0,
+      "56Fe/54Fe" :  15.698587},
+
+  "spike" :
+    { "name" : "Rutgers_Cr",
+      "50Cr" : 0.604504484,
+      "52Cr" : 0.03522314,
+      "53Cr" : 0.005211764,
+      "54Cr" : 0.355060612,
+      "alpha_corr" : 0.0
+    },
+
+  "standard" :
+    { "name" : "SRM979",
+      "50Cr" : 0.043452,
+      "52Cr" : 0.837895,
+      "53Cr" : 0.095006,
+      "54Cr" : 0.023647,
+      "95conf_50Cr" : 0.000085,
+      "95conf_52Cr" : 0.000117,
+      "95conf_53Cr" : 0.000110,
+      "95conf_54Cr" : 0.000048,
+      "ref" : "Shields et al. 1966"
+    },
+
+  "outlier_rejection":
+    { "iqr_limit" : 1.5,
+      "max_fraction" : 0.05},
+
+  "initial_parameters":
+    [ 0.003,-0.06,0.8 ],
+
+  "file_spec":
+        {
+        "PLUGIN": "neptune_exp",
+        "PARAMETERS": [
+            "params",
+            {
+                "start_string": "Neptune Analysis Data Report",
+                "labels": [
+                    "Filename",
+                    "Date",
+                    "Sample ID",
+                    "Method Name",
+                    "Wheel ID",
+                    "Run number",
+                    "View Mode",
+                    "Evaluation Mode",
+                    "Analysis Date",
+                    "Analysis Time",
+                    "Operator",
+                    "Instrument",
+                    "Comment",
+                    "SampleType",
+                    "Blank 1",
+                    "Blank 2",
+                    "Standard 1",
+                    "Standard 2",
+                    "Data Version",
+                    "Export Version"
+                ]
+            }
+        ],
+        "CYCLES": [
+            "table",
+            {
+                "start_string": "Cycle Time",
+                "end_string": "\n***",
+                "first_col": 2,
+                "n_columns": 7,
+                "skip_rows": 1
+            },
+            {
+                "search_string": "Cycle",
+                "first_col": 2,
+                "n_columns": 7
+            }
+        ]
+    }
+}
