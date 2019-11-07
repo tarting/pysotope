@@ -150,7 +150,6 @@ def read_file(
 
     data = dict()
     for label, data_spec in file_spec['file_spec'].items():
-        print(label, data_spec)
         data_type = data_spec[0]
         data_spec = data_spec[1:]
 
