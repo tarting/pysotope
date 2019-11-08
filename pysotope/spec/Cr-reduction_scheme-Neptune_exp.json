@@ -22,7 +22,7 @@
 
   "rel_report":
     {
-        "d53Cr_SRM3112a" : ["53Cr", "52Cr", 1000, true]
+        "d53Cr_SRM979" : ["53Cr", "52Cr", 1000, true]
     },
 
     "plot_vars":
@@ -43,7 +43,7 @@
           "raw_52",
           ["raw_50","raw_52"],
           "soln_50Cr/52Cr",
-          "d53Cr_SRM3112a",
+          "d53Cr_SRM979",
           "beta_ins",
           ["raw_56","raw_54"]
         ]
