@@ -1213,31 +1213,6 @@ class TestInvertData(unittest.TestCase):
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
         self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
 
-def get_interfering_elements(beta, ref_intensity):
-    used_isotopes = SPEC["used_isotopes"]
-    nat_rats = SPEC['nat_ratios']
-    masses = SPEC['masses']
-    columns = SPEC['cycle_columns']
-    interfs = dict()
-    for mass, interferences in used_isotopes.items():
-        for ref_mass, elem in interferences:
-            if elem not in interfs:
-                interfs[elem] = np.zeros(len(columns))
-            mass_ratio = (
-                    masses['{}{}'.format(ref_mass, elem)] /
-                    masses['{}{}'.format(mass, elem)]
-            )
-            ratio_init = nat_rats['{0}{2}/{1}{2}'.format(ref_mass, mass, elem)]
-            ratio = ratios.exp_corr(
-                    ratio_init,
-                    mass_ratio,
-                    beta,
-            )
-            interfs[elem][columns[ref_mass]] = 1 * ref_intensity
-            interfs[elem][columns[mass]] = 1/ratio * ref_intensity
-
-
-    return interfs
 
 if __name__ == '__main__':
     unittest.main()
