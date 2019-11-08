@@ -39,6 +39,7 @@ import pysotope.invert as invert
 import pysotope.ratios as ratios
 import pysotope.run as run
 import pysotope.typedefs as typedefs
+import pysotope.spikecal as spikecal
 
                                             # read_xls is deprecated
 from pysotope.data_reader import DataReader, read_spec_file, read_xls
@@ -47,6 +48,7 @@ from pysotope.diagrams import generate_cycleplots, generate_summaryplot
 from pysotope.run import reduce_data
 from pysotope.typedefs import (
         Data, Spec, Dict, Any, List, Callable, Tuple,)
+from pysotope.spikecal import optimize_spec, optimize_spike
 
 #labeled = namedtuple('labeled', ['labels', 'data'])
 #reduced = namedtuple('reduced', ['summary', 'data'])
