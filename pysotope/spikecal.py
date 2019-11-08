@@ -38,7 +38,8 @@ def read_from_extvar(
     spec = read_spec_file(spec_path)
 
     runs = OrderedDict()
-
+    if dir_path == '':
+        dir_path = './'
     with __cwd(dir_path):
         for file_id, row in tqdm(
                     extvars.iterrows(),
@@ -48,7 +49,7 @@ def read_from_extvar(
                 pass
             else:
                 file_reader = DataReader(spec)
-                raw_data = file_reader(row['filepath'], spec)
+                raw_data = file_reader(row['filepath'])
                 raw_data['metadata'] = OrderedDict(row)
                 runs[file_id] = raw_data
 

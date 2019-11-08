@@ -33,6 +33,7 @@ import os
 import re
 import shutil
 import functools
+import json
 from glob import glob
 from collections import OrderedDict
 
@@ -349,6 +350,31 @@ def plot(
         pst.generate_cycleplots(cycle_df, summary_df, spec, gfxdir)
     else:
         click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+
+@main.command()
+@click.argument('listfile')
+@click.argument('specfile', required=True)
+@click.argument('outfile', required=False)
+@click.pass_obj
+def calibrate(
+        ctx: dict,
+        listfile: str,
+        specfile: str,
+        outfile
+        ) -> None:
+
+    if outfile is None:
+        outfile = 'optimized.json'
+    if specfile is None:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+    print(specfile)
+    if spec:
+        opt_spec = pst.optimize_spec(listfile, specfile)
+        with open(outfile, 'w') as fp:
+            json.dump(opt_spec, fp, indent=4)
+    else:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+
 
 
 @main.command()
