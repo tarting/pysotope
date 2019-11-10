@@ -100,10 +100,12 @@ def get_table(
     table = [l.split(',') for l in table]
     table = [l for l in table if len(reduce(lambda a, b: a+b, l)) > 0]
     table = [l[first_col:first_col+n_columns] for l in table[skip_rows:]]
-    try:
-        table = [[float(v) for v in r] for r in table]
-    except ValueError:
-        table = [[v for v in r] for r in table]
+    for i, row in enumerate(table):
+        try:
+            new_row = [float(v) for v in row]
+        except ValueError:
+            new_row = row
+        table[i] = new_row
     return table
 
 
