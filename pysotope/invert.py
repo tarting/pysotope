@@ -477,36 +477,16 @@ def calc_conc(
 def gen_filter_function(
         iqr_limit: float,
         max_fraction: float,
-        first_cycle: int = None,
-        last_cycle: int = None,
-        ignore_cycles: List[int] = [],
         ) -> Callable[[Column, bool], Column]:
 
-    if not first_cycle:
-        first_cycle = 1
-    if not last_cycle:
-        last_cycle = -1
 
     def filter_data(
             data: Column,
             get_rejected_cycle_idx: bool = False,
-            first_cycle: int = first_cycle,
-            last_cycle: int = last_cycle,
-            ignore_cycles: List[int] = ignore_cycles,
             ) -> Column:
         '''
         Outlier rejection for satistics calculation.
         '''
-        if last_cycle < 0:
-            last_cycle = len(data)
-
-        data = [
-            value
-            for i, value in enumerate(data, 1)
-            if      (i >= first_cycle)
-                and (i <= last_cycle)
-                and (i not in ignore_cycles)
-            ]
 
         data = np.array(data)
         data = data[(~np.isnan(data)) & (~np.isinf(data))]
@@ -609,16 +589,25 @@ def summarise_data(
 
     summary = OrderedDict()
     rel_report = file_spec['rel_report']
-    filter_data = gen_filter_function(
-        **file_spec['outlier_rejection'],
-        first_cycle = first_cycle,
-        last_cycle = last_cycle,
-        ignore_cycles = ignore_cycles,
-        )
+    filter_data = gen_filter_function(**file_spec['outlier_rejection'])
+
+    if first_cycle is None:
+        first_cycle = 1
 
     for label in results.keys():
+
+        if last_cycle is None:
+            last_cycle = len(results[label])
+
+        values = np.array([
+            value
+            for i, value in enumerate(results[label], 1)
+            if      (i >= first_cycle)
+                and (i <= last_cycle)
+                and (i not in ignore_cycles)
+            ])
         if label in rel_report:
-            filtered = filter_data(results[label])
+            filtered = filter_data(values)
             slabs, svals = calc_stat(
                 filtered, label,
                 mean=True, std=True, rsd=False, se=True,
@@ -628,28 +617,28 @@ def summarise_data(
             _, _, _, unfiltered = rel_report[label]
             if unfiltered:
                 slabs, svals = calc_stat(
-                    results[label], label + '_unfiltered',
+                    values, label + '_unfiltered',
                     mean=True, std=True, rsd=False, se=True,
                     minim=False, maxim=False, N=True)
                 for slab, val in zip(slabs, svals):
                     summary[slab] = val
         elif label == 'raw_{}'.format(file_spec['report_fracs'][0]):
             slabs, svals = calc_stat(
-                results[label], label,
+                values, label,
                 mean=True, std=True, rsd=False, se=False,
                 minim=True, maxim=True, N=True)
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         elif 'raw' in label:
-            summary[label] = results[label].mean()
+            summary[label] = values.mean()
         elif label == 'beta_ins':
             slabs, svals = calc_stat(
-                results[label], label,
+                values, label,
                 mean=True, std=True, rsd=False, se=False,
                 minim=False, maxim=False, N=False)
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         else:
-            summary[label] = results[label].mean()
+            summary[label] = values.mean()
 
     return summary

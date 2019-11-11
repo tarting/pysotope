@@ -57,8 +57,8 @@ def generate_summaryplot(
         min_cycles = spec['plot_vars']['min_cycles']
         summaries_df_filtered = summaries_df_filtered[
             summaries_df_filtered[plot_vars[1]+ '_N' ] > min_cycles]
-        
-    
+
+
     yticklabels = []
     yticks = []
     for i, (bead, df) in enumerate(summaries_df_filtered.groupby('bead_id')):
@@ -82,8 +82,7 @@ def generate_summaryplot(
                 ax.errorbar(x=df[numer]/df[denom], y=ys, marker='.', mfc='w', ls='')
                 ax.set_xlabel(numer + '/' + denom)
                 ax.set_xscale('log')
-
-            else: 
+            else:
                 ax.errorbar(x=df[var], y=ys, marker='.', mfc='w', ls='')
                 ax.set_xlabel(var)
 
@@ -105,10 +104,10 @@ def generate_cycleplots(
         **kwargs: Any,
         ) -> None:
     plot_vars = spec['plot_vars']['cycles']
-    
+
     filter_function = gen_filter_function(**spec['outlier_rejection'])
-    
-    
+
+
     new_plot_vars = []
     for i,var in enumerate(plot_vars):
         if type(var) is list:
@@ -118,8 +117,8 @@ def generate_cycleplots(
             new_plot_vars.append(new_var)
         else:
             new_plot_vars.append(var)
-    
-    
+
+
     n_diagrams = len(plot_vars)
     for bead_id, bead_df in tqdm(cycle_df.groupby('bead_id')):
         height = math.ceil(n_diagrams/2)
@@ -136,27 +135,31 @@ def generate_cycleplots(
             xs = [-1]
             bead_xs = []
             bead_ys = []
-            
+
             rej_xs = []
             rej_ys = []
-            
+
             for run_no in run_numbers:
                 run_summary_row = bead_summary_df.loc[run_no]
 
                 run_df = bead_df[bead_df.run_no == run_no].copy()
                 run_df = run_df.iloc[run_summary_row['first_row']-1:
                                      run_summary_row['last_row']]
+                run_df = run_df[run_df.ignore.apply(lambda i: not i)]
                 if len(run_df) <= 1:
                     continue
+
                 ys = run_df[ylab]
                 xs = xs[-1] + np.array(range(len(run_df))) + 1
-                
+
+
+
                 l = ax.plot(xs, ys, '.')[0]
                 root_n = len(ys)**0.5
                 ax.fill_between([min(xs), max(xs)], 2*[np.mean(ys) - np.std(ys)*2], 2*[np.mean(ys) + np.std(ys)*2], alpha=0.1, color = l.get_color())
                 ax.fill_between([min(xs), max(xs)], 2*[np.mean(ys) - (np.std(ys)*2)/root_n], 2*[np.mean(ys) +( np.std(ys)*2)/root_n], alpha=0.2, color = l.get_color())
                 ax.plot([min(xs), max(xs)], 2*[np.mean(ys)], '-', color = l.get_color())
-                
+
                 # Get coordinates for rejected points
                 mean = np.median(ys)
                 filterdf = pd.DataFrame.from_dict({'ys':ys,'xs':xs})
@@ -171,7 +174,7 @@ def generate_cycleplots(
 
                 bead_xs += list(xs)
                 bead_ys += list(ys)
-                
+
             ax.set_xlim(*ax.get_xlim())
             ax.plot(ax.get_xlim(), 2*[np.mean(bead_ys)], ':k', zorder=-1)
             root_n = len(bead_ys)**0.5
