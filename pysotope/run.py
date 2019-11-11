@@ -394,7 +394,7 @@ def calibrate(
         click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
     print(specfile)
     if spec:
-        opt_spec = pst.optimize_spec(listfile, specfile)
+        opt_spec = pst.optimize_spec(listfile, specfile, reload=True)
         with open(outfile, 'w') as fp:
             json.dump(opt_spec, fp, indent=4)
     else:

@@ -48,8 +48,10 @@ def read_from_extvar(
             if row['ignore']:
                 pass
             else:
+
                 file_reader = DataReader(spec)
                 raw_data = file_reader(row['filepath'])
+
                 raw_data['metadata'] = OrderedDict(row)
                 runs[file_id] = raw_data
 
@@ -59,9 +61,12 @@ def read_data(
             ext_vars_path: str,
             spec_path: str,
             reload: str = False,
-            pickle_file: str = 'cal_standards.db'
+            pickle_file: str = 'cal_standards.pickle.db',
             ) -> dict:
-    if not os.path.isfile(pickle_file):
+
+    if not pickle_file:
+        reload = True
+    elif not os.path.isfile(pickle_file):
         reload = True
 
     if reload:
@@ -78,22 +83,42 @@ def read_data(
 
 def cycle_sum(
             raw: dict,
-            metadata_key:
-            str='metadata'
+            metadata_key: str = 'metadata'
             ) -> dict:
     '''Pure function?'''
     cycles = raw['CYCLES']
 
     if metadata_key in raw:
+        meta = raw[metadata_key]
         try:
-            first_row = raw[metadata_key]['first_row']
+            first_cycle = meta['first_row']
         except KeyError:
-            first_row = 0
+            first_cycle = 1
         try:
-            last_row = raw[metadata_key]['last_row']
+            last_cycle = meta['last_row']
         except KeyError:
-            last_row = len(cycles)
+            last_cycle = 120
 
+        try:
+            ignore_val = meta['ignore_rows']
+            if ignore_val == '':
+                ignore_cycles = []
+            elif type(ignore_val) is int:
+                ignore_cycles = [ignore_val]
+            else:
+                ignore_cycles = [int(v) for v in row['ignore_rows'].split(',')]
+        except KeyError:
+            ignore_cycles = []
+
+        cycles = [
+            v for i, v in enumerate(cycles, 1) if
+                    (i >= first_cycle)
+                and (i <= last_cycle)
+                and (i not in ignore_cycles)
+        ]
+
+    n_cols = len(cycles[0])
+    cycles = [cycle for cycle in cycles if len(cycle) == n_cols]
     sum_ = [sum(col) for col in zip(*cycles)]
     return sum_
 
@@ -166,13 +191,14 @@ def optimize_spec(
             ext_vars_path: str,
             spec_path: str,
             reload: str = False,
-            pickle_file: str = 'cal_standards.db',
+            pickle_file: str = 'cal_standards.pickle.db',
             alpha_0: float = 0,
             ) -> dict:
     spec = read_spec_file(spec_path)
     runs = read_data(
             ext_vars_path, spec_path,
-            reload, pickle_file)
+            reload,
+            pickle_file)
     run_ids, sums = get_sums(runs)
 
     alpha_corr = optimize_spike(sums, spec, alpha_0=alpha_0)
