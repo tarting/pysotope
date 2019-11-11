@@ -493,6 +493,8 @@ def gen_filter_function(
 
         data = np.array(data)
         data = data[(~np.isnan(data)) & (~np.isinf(data))]
+        if len(data) == 0:
+            return np.array([])
         mean = np.median(data)
         limit = iqr_limit * stats.iqr(data)
         N = len(data)
@@ -563,11 +565,15 @@ def calc_stat(
             data_out.append(data_in.min())
         except FloatingPointError:
             data_out.append(np.nan)
+        except ValueError:
+            data_out.append(np.nan)
     if maxim:
         labels_out.append(label+'_max')
         try:
             data_out.append(data_in.max())
         except FloatingPointError:
+            data_out.append(np.nan)
+        except ValueError:
             data_out.append(np.nan)
     if N:
         labels_out.append(label+'_N')
@@ -633,7 +639,10 @@ def summarise_data(
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         elif 'raw' in label:
-            summary[label] = values.mean()
+            try:
+                summary[label] = values.mean()
+            except FloatingPointError:
+                summary[label] = np.nan
         elif label == 'beta_ins':
             slabs, svals = calc_stat(
                 values, label,
@@ -642,6 +651,9 @@ def summarise_data(
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         else:
-            summary[label] = values.mean()
+            try:
+                summary[label] = values.mean()
+            except FloatingPointError:
+                summary[label] = np.nan
 
     return summary
