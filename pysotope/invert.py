@@ -352,6 +352,9 @@ def invert_data(
     if columns:
         cycles = [*zip(*cycles)]
 
+    n_columns = len(file_spec['cycle_columns'])
+    cycles = [c for c in cycles if len(c) == n_columns]
+
     zero_rows = []
     for i, r in enumerate(cycles):
         try:
