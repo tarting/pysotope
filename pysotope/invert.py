@@ -476,15 +476,38 @@ def calc_conc(
 
 def gen_filter_function(
         iqr_limit: float,
-        max_fraction: float
+        max_fraction: float,
+        first_cycle: int = None,
+        last_cycle: int = None,
+        ignore_cycles: List[int] = [],
         ) -> Callable[[Column, bool], Column]:
+
+    if not first_cycle:
+        first_cycle = 1
+    if not last_cycle:
+        last_cycle = -1
+
     def filter_data(
             data: Column,
-            get_rejected_cycle_idx: bool = False
+            get_rejected_cycle_idx: bool = False,
+            first_cycle: int = first_cycle,
+            last_cycle: int = last_cycle,
+            ignore_cycles: List[int] = ignore_cycles,
             ) -> Column:
         '''
         Outlier rejection for satistics calculation.
         '''
+        if last_cycle < 0:
+            last_cycle = len(data)
+
+        data = [
+            value
+            for i, value in enumerate(data, 1)
+            if      (i >= first_cycle)
+                and (i <= last_cycle)
+                and (i not in ignore_cycles)
+            ]
+
         data = np.array(data)
         data = data[(~np.isnan(data)) & (~np.isinf(data))]
         mean = np.median(data)
@@ -575,6 +598,9 @@ def calc_stat(
 def summarise_data(
         results: Dict[str, List[float]],
         file_spec: Spec,
+        first_cycle: int = None,
+        last_cycle: int = None,
+        ignore_cycles: List[int] = [],
         ) -> Dict[str, float]:
     '''
     Calculate sample statistics.
@@ -583,7 +609,12 @@ def summarise_data(
 
     summary = OrderedDict()
     rel_report = file_spec['rel_report']
-    filter_data = gen_filter_function(**file_spec['outlier_rejection'])
+    filter_data = gen_filter_function(
+        **file_spec['outlier_rejection'],
+        first_cycle = first_cycle,
+        last_cycle = last_cycle,
+        ignore_cycles = ignore_cycles,
+        )
 
     for label in results.keys():
         if label in rel_report:

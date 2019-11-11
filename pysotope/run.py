@@ -165,16 +165,38 @@ def reduce_data(
     all_summaries = OrderedDict()
     click.echo('STATUS | Processing data ...', err=True)
     # no_read = []
-    items = list(overview_df.iterrows())
-    for k, row in tqdm(items):
+    for k, row in tqdm(overview_df.iterrows(), total=len(overview_df)):
+        # Skip if needed
         filepath = row['filepath']
         if row['ignore']:
             continue
         sys.stdout.flush()
+
+        first_cycle = row['first_row'] if 'first_row' in row else None
+        last_cycle = row['last_row'] if 'last_row' in row else None
+        if 'ignore_rows' in row:
+            ignore_val = row['ignore_rows']
+            if ignore_val == '':
+                ignore_cycles = []
+            elif type(ignore_val) is int:
+                ignore_cycles = [ignore_val]
+            else:
+                ignore_cycles = [int(v) for v in row['ignore_rows'].split(',')]
+        else:
+            ignore_cycles = []
+
+
         filename, data = pst.safe_read_file(filepath, spec)
         reduced = pst.invert_data(data['CYCLES'], spec)
-        reduced = trim_table(reduced, row)
-        summary = pst.summarise_data(reduced, spec)
+        #reduced = trim_table(reduced, row)
+
+        summary = pst.summarise_data(
+                results=reduced,
+                file_spec=spec,
+                first_cycle = first_cycle,
+                last_cycle = last_cycle,
+                ignore_cycles = ignore_cycles,
+        )
         try:
             time = data['analysis_time']
             timestamp = data['analysis_timestamp']
