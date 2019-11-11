@@ -1,0 +1,184 @@
+{
+    "version": 2,
+    "description": "Data reduction for Cr isotopes, calibrated for 50Cr-54Cr spike pair, with reporting of 53CR/52Cr ratio relative to NIST SRM 979, on the Thermo-Fisher Neptune at Rutgers University Geocemistry Lab",
+    "element": "Cr",
+    "cycle_columns": {
+        "49": 0,
+        "50": 1,
+        "51": 2,
+        "52": 3,
+        "53": 4,
+        "54": 5,
+        "56": 6
+    },
+    "report_fracs": [
+        "52",
+        [
+            "50",
+            "53",
+            "54"
+        ]
+    ],
+    "reduce_fracs": [
+        "54",
+        [
+            "50",
+            "52",
+            "53"
+        ]
+    ],
+    "rel_report": {
+        "d53Cr_SRM979": [
+            "53Cr",
+            "52Cr",
+            1000,
+            true
+        ]
+    },
+    "plot_vars": {
+        "2sigma_filter": 0.5,
+        "intens_min": 0.32,
+        "min_cycles": 30,
+        "summary": [
+            "d53Cr_SRM979",
+            "raw_52",
+            "beta_ins",
+            "spl_conc",
+            [
+                "raw_56",
+                "raw_54"
+            ]
+        ],
+        "cycles": [
+            "raw_52",
+            [
+                "raw_50",
+                "raw_52"
+            ],
+            "soln_50Cr/52Cr",
+            "d53Cr_SRM979",
+            "beta_ins",
+            [
+                "raw_56",
+                "raw_54"
+            ]
+        ]
+    },
+    "used_isotopes": {
+        "50": [
+            [
+                "49",
+                "Ti"
+            ],
+            [
+                "51",
+                "V"
+            ]
+        ],
+        "52": [],
+        "53": [],
+        "54": [
+            [
+                "56",
+                "Fe"
+            ]
+        ]
+    },
+    "masses": {
+        "50Cr": 49.946049,
+        "52Cr": 51.940512,
+        "53Cr": 52.940653,
+        "54Cr": 53.938885,
+        "49Ti": 48.947871,
+        "50Ti": 49.944792,
+        "51V": 50.943964,
+        "50V": 49.947163,
+        "54Fe": 53.939613,
+        "56Fe": 55.934941
+    },
+    "nat_ratios": {
+        "49Ti/50Ti": 1.0185185185,
+        "51V/50V": 399.0,
+        "56Fe/54Fe": 15.698587
+    },
+    "spike": {
+        "name": "Rutgers_Cr",
+        "50Cr": 0.6019378416713759,
+        "52Cr": 0.035275055599650086,
+        "53Cr": 0.0052340279021786205,
+        "54Cr": 0.35755307482679555,
+        "alpha_corr": 0.0,
+        "MB_corr_type": "53Cr/52Cr",
+        "alpha_calibration": -0.14628080830806786,
+        "d53Cr_SRM979_mean_weighted": 4.212775961409676e-13,
+        "d53Cr_SRM979_2STD": 0.11583450536825907,
+        "d53Cr_SRM979_2SE": 0.06695829288929642,
+        "d53Cr_SRM979_N": 3
+    },
+    "standard": {
+        "name": "SRM979",
+        "50Cr": 0.043453124083555,
+        "52Cr": 0.837892867018023,
+        "53Cr": 0.095008672191174,
+        "54Cr": 0.023645336707249,
+        "95conf_50Cr": 8.5e-05,
+        "95conf_52Cr": 0.000117,
+        "95conf_53Cr": 0.00011,
+        "95conf_54Cr": 4.8e-05,
+        "ref": "Shields et al. 1966"
+    },
+    "outlier_rejection": {
+        "iqr_limit": 1.5,
+        "max_fraction": 0.05
+    },
+    "initial_parameters": [
+        0.003,
+        -0.06,
+        0.8
+    ],
+    "filetype_plugin": "pysotope.plugins.filetype_neptune_exp",
+    "file_spec": {
+        "PARAMETERS": [
+            "params",
+            {
+                "labels": [
+                    "Filename",
+                    "Date",
+                    "Sample ID",
+                    "Method Name",
+                    "Wheel ID",
+                    "Run number",
+                    "View Mode",
+                    "Evaluation Mode",
+                    "Analysis Date",
+                    "Analysis Time",
+                    "Operator",
+                    "Instrument",
+                    "Comment",
+                    "SampleType",
+                    "Blank 1",
+                    "Blank 2",
+                    "Standard 1",
+                    "Standard 2",
+                    "Data Version",
+                    "Export Version"
+                ]
+            }
+        ],
+        "CYCLES": [
+            "table",
+            {
+                "start_string": "Cycle",
+                "end_string": "***",
+                "first_col": 2,
+                "n_columns": 7,
+                "skip_rows": 1
+            },
+            {
+                "search_string": "Cycle",
+                "first_col": 2,
+                "n_columns": 7
+            }
+        ]
+    }
+}

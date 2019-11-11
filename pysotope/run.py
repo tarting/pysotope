@@ -33,6 +33,7 @@ import os
 import re
 import shutil
 import functools
+import json
 from glob import glob
 from collections import OrderedDict
 
@@ -164,16 +165,38 @@ def reduce_data(
     all_summaries = OrderedDict()
     click.echo('STATUS | Processing data ...', err=True)
     # no_read = []
-    items = list(overview_df.iterrows())
-    for k, row in tqdm(items):
+    for k, row in tqdm(overview_df.iterrows(), total=len(overview_df)):
+        # Skip if needed
         filepath = row['filepath']
         if row['ignore']:
             continue
         sys.stdout.flush()
+
+        first_cycle = row['first_row'] if 'first_row' in row else None
+        last_cycle = row['last_row'] if 'last_row' in row else None
+        if 'ignore_rows' in row:
+            ignore_val = row['ignore_rows']
+            if ignore_val == '':
+                ignore_cycles = []
+            elif type(ignore_val) is int:
+                ignore_cycles = [ignore_val]
+            else:
+                ignore_cycles = [int(v) for v in row['ignore_rows'].split(',')]
+        else:
+            ignore_cycles = []
+
+
         filename, data = pst.safe_read_file(filepath, spec)
         reduced = pst.invert_data(data['CYCLES'], spec)
-        reduced = trim_table(reduced, row)
-        summary = pst.summarise_data(reduced, spec)
+        #reduced = trim_table(reduced, row)
+
+        summary = pst.summarise_data(
+                results=reduced,
+                file_spec=spec,
+                first_cycle = first_cycle,
+                last_cycle = last_cycle,
+                ignore_cycles = ignore_cycles,
+        )
         try:
             time = data['analysis_time']
             timestamp = data['analysis_timestamp']
@@ -190,6 +213,9 @@ def reduce_data(
             summary.update(overview_df.loc[filename])
             all_summaries[filename] = summary
         if bool(reduced) & (cycles_file is not None):
+            ignore = [i in ignore_cycles
+                        for i, _ in enumerate(reduced[list(reduced)[0]], 1)]
+            reduced['ignore'] = ignore
             write_cycles(cycles_file, reduced, summary)
 
 
@@ -281,18 +307,33 @@ def spec(
 @main.command()
 @click.argument('datadir')
 @click.argument('listfile', required=False, default='./external_variables.xlsx')
+@click.argument('specfile', required=False, default=None)
 @click.pass_obj
 def init(
         ctx: dict,
         datadir: str,
         listfile: str,
+        specfile: str,
         ) -> None:
-    spec = locate_spec_file()
+    if specfile is None:
+        spec = locate_spec_file()
+        if not spec:
+            spec_file = get_spec_from_store('')
+            if spec_file:
+                shutil.copy2(spec_file, '.')
+        spec = locate_spec_file()
+    else:
+        spec = pst.read_spec_file(specfile)
     if not spec:
-        spec_file = get_spec_from_store('')
-        if spec_file:
-            shutil.copy2(spec_file, '.')
-    new_list = pst.filelist.append_to_list(datadir, listfile)
+        sys.exit(1)
+
+
+    reader = pst.DataReader(spec)
+    new_list = pst.filelist.append_to_list(
+            datadir,
+            listfile,
+            extension=reader.extension,
+    )
     new_list.to_excel(listfile)
 
 @main.command()
@@ -334,6 +375,31 @@ def plot(
         pst.generate_cycleplots(cycle_df, summary_df, spec, gfxdir)
     else:
         click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+
+@main.command()
+@click.argument('listfile')
+@click.argument('specfile', required=True)
+@click.argument('outfile', required=False)
+@click.pass_obj
+def calibrate(
+        ctx: dict,
+        listfile: str,
+        specfile: str,
+        outfile
+        ) -> None:
+
+    if outfile is None:
+        outfile = 'optimized.json'
+    if specfile is None:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+    print(specfile)
+    if spec:
+        opt_spec = pst.optimize_spec(listfile, specfile, reload=True)
+        with open(outfile, 'w') as fp:
+            json.dump(opt_spec, fp, indent=4)
+    else:
+        click.echo('ERROR  | Specification-file not found {}'.format(specfile), err=True, color='red')
+
 
 
 @main.command()

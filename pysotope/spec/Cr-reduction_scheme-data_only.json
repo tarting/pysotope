@@ -96,6 +96,9 @@
   "initial_parameters":
     [ 0.003,-0.06,0.8 ],
 
+  "filetype_plugin":
+       "pysotope.plugins.filetype_xls",
+
   "file_spec":
         {
         "CYCLES": [
