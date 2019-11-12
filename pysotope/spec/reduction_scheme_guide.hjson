@@ -138,6 +138,17 @@
   "date":{
     "field" : ["PARAMETERS", "Analysis Start Time"],
     "report_format" : "%Y-%m-%d %H:%M:%S"},
+  
+  # Filetype plugin
+  # This is the import path to a python module able to read the specified
+  # datatype. These can be installed by putting a copy of the plugin in the 
+  # plugin directory under the pysotope code folder. 
+  # The filetype plugin must expose a single function:
+  #    read_file(file_path: str, file_spec: dict) -> dict
+  # Where dict contains at a key "CYCLES" with a list of each analytical cycle
+  # needed for data reduction.
+  "filetype_plugin":
+        "pysotope.plugins.filetype_xls",
 
   # Data file specification.
   # Specific for the provided xls reader, as it outputs all sheets as a single

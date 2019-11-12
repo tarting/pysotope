@@ -147,6 +147,8 @@
         ],
         "report_format": "%Y-%m-%d %H:%M:%S"
     },
+    "filetype_plugin": 
+        "pysotope.plugins.filetype_xls",
     "file_spec": {
         "PARAMETERS": [
             "params",

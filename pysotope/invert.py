@@ -352,6 +352,9 @@ def invert_data(
     if columns:
         cycles = [*zip(*cycles)]
 
+    n_columns = len(file_spec['cycle_columns'])
+    cycles = [c for c in cycles if len(c) == n_columns]
+
     zero_rows = []
     for i, r in enumerate(cycles):
         try:
@@ -476,17 +479,22 @@ def calc_conc(
 
 def gen_filter_function(
         iqr_limit: float,
-        max_fraction: float
+        max_fraction: float,
         ) -> Callable[[Column, bool], Column]:
+
+
     def filter_data(
             data: Column,
-            get_rejected_cycle_idx: bool = False
+            get_rejected_cycle_idx: bool = False,
             ) -> Column:
         '''
         Outlier rejection for satistics calculation.
         '''
+
         data = np.array(data)
         data = data[(~np.isnan(data)) & (~np.isinf(data))]
+        if len(data) == 0:
+            return np.array([])
         mean = np.median(data)
         limit = iqr_limit * stats.iqr(data)
         N = len(data)
@@ -557,11 +565,15 @@ def calc_stat(
             data_out.append(data_in.min())
         except FloatingPointError:
             data_out.append(np.nan)
+        except ValueError:
+            data_out.append(np.nan)
     if maxim:
         labels_out.append(label+'_max')
         try:
             data_out.append(data_in.max())
         except FloatingPointError:
+            data_out.append(np.nan)
+        except ValueError:
             data_out.append(np.nan)
     if N:
         labels_out.append(label+'_N')
@@ -575,6 +587,9 @@ def calc_stat(
 def summarise_data(
         results: Dict[str, List[float]],
         file_spec: Spec,
+        first_cycle: int = None,
+        last_cycle: int = None,
+        ignore_cycles: List[int] = [],
         ) -> Dict[str, float]:
     '''
     Calculate sample statistics.
@@ -585,9 +600,23 @@ def summarise_data(
     rel_report = file_spec['rel_report']
     filter_data = gen_filter_function(**file_spec['outlier_rejection'])
 
+    if first_cycle is None:
+        first_cycle = 1
+
     for label in results.keys():
+
+        if last_cycle is None:
+            last_cycle = len(results[label])
+
+        values = np.array([
+            value
+            for i, value in enumerate(results[label], 1)
+            if      (i >= first_cycle)
+                and (i <= last_cycle)
+                and (i not in ignore_cycles)
+            ])
         if label in rel_report:
-            filtered = filter_data(results[label])
+            filtered = filter_data(values)
             slabs, svals = calc_stat(
                 filtered, label,
                 mean=True, std=True, rsd=False, se=True,
@@ -597,28 +626,34 @@ def summarise_data(
             _, _, _, unfiltered = rel_report[label]
             if unfiltered:
                 slabs, svals = calc_stat(
-                    results[label], label + '_unfiltered',
+                    values, label + '_unfiltered',
                     mean=True, std=True, rsd=False, se=True,
                     minim=False, maxim=False, N=True)
                 for slab, val in zip(slabs, svals):
                     summary[slab] = val
         elif label == 'raw_{}'.format(file_spec['report_fracs'][0]):
             slabs, svals = calc_stat(
-                results[label], label,
+                values, label,
                 mean=True, std=True, rsd=False, se=False,
                 minim=True, maxim=True, N=True)
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         elif 'raw' in label:
-            summary[label] = results[label].mean()
+            try:
+                summary[label] = values.mean()
+            except FloatingPointError:
+                summary[label] = np.nan
         elif label == 'beta_ins':
             slabs, svals = calc_stat(
-                results[label], label,
+                values, label,
                 mean=True, std=True, rsd=False, se=False,
                 minim=False, maxim=False, N=False)
             for slab, val in zip(slabs, svals):
                 summary[slab] = val
         else:
-            summary[label] = results[label].mean()
+            try:
+                summary[label] = values.mean()
+            except FloatingPointError:
+                summary[label] = np.nan
 
     return summary

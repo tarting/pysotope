@@ -92,11 +92,7 @@ class TestInvertData(unittest.TestCase):
                 mix, 'report_fracs',
                 beta, SPEC)
             return fract_mix
-        
-        self.mix = ratios.mix_abund(
-            SPEC['spike'],
-            SPEC['standard'],
-            f_spike)
+
         self.mix = ratios.mix_abund(
             SPEC['spike'],
             SPEC['standard'],
@@ -127,7 +123,7 @@ class TestInvertData(unittest.TestCase):
         self.d53Cr_nn = ((rCr_53_52_nn/rCr_53_52_standard)-1) * 1e3
 
 
-
+    # Test fractionation internal and external
     def test_mix(self):
         '''Test mixture without any interference'''
         row = ratios.row_from_abund(self.mix, SPEC)
@@ -199,6 +195,9 @@ class TestInvertData(unittest.TestCase):
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-8)
         self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-8)
 
+
+    # Test iron interference correction at 0.01 V 56Fe at sum Cr = 1V
+    # Fails with 1e-5 difference
     def test_Fe_interf_0n0i(self):
         interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
         mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
@@ -240,7 +239,7 @@ class TestInvertData(unittest.TestCase):
         self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
         self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
         self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
-    
+
     def test_Fe_interf_pn0i(self):
         interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
         mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
@@ -325,7 +324,894 @@ class TestInvertData(unittest.TestCase):
         self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
         self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
 
+    # Test titanium interference correction at 0.001V 49Ti at sum Cr = 1V
+    # Much lower Ti on reference isotope because of high 50Ti abundance
+    # Fails with 1e-5 difference
+    def test_Ti_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
 
+    def test_Ti_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Ti_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_Ti_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_Ti_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Ti_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_Ti_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_Ti_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_Ti_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.001/frac_rat, '49': 0.001}
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    # Test vanadium interference correction at 0.01V 51V at sum Cr = 1V
+    # Fails with 1e-5 difference
+    def test_V_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_V_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_V_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_V_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_V_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_V_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_V_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_V_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_V_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+        interf = {'50': 0.01/frac_rat, '51': 0.01}
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    # Test titanium and vanadium interference correction at
+    #   0.001V 49Ti at sum Cr = 1V
+    #   0.01V 51V at sum Cr = 1V
+    # Fails with 1e-5 difference
+    def test_TiV_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiV_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiV_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiV_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiV_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiV_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiV_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiV_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.001, '50': 0.001/frac_rat_Ti + 0.01/frac_rat_V, '51': 0.01}
+
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+
+    # Test titanium, vanadium and iron interference correction at
+    #   0.0005V 49Ti at sum Cr = 1V
+    #   0.005V 51V at sum Cr = 1V
+    #   0.005V 56Fe at sum Cr = 1V
+    # Fails with 1e-5 difference
+    # Lower interference intensities required overall for tests to succeed
+    def test_TiVFe_interf_0n0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_0n0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiVFe_interf_0npi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_0npi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiVFe_interf_0nni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_0nni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0],  0, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0],       0, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiVFe_interf_pn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_pn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiVFe_interf_pnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_pnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiVFe_interf_pnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_pnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_pn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.pn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
+
+    def test_TiVFe_interf_nn0i(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, 0)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_nn0i, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],        0, delta=1e-6)
+
+    def test_TiVFe_interf_nnpi(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.pi)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_nnpi, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.pi, delta=1e-6)
+
+    def test_TiVFe_interf_nnni(self):
+        interf_rat = SPEC['nat_ratios']['51V/50V']
+        mass_rat = SPEC['masses']['51V'] / SPEC['masses']['50V']
+        frac_rat_V = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['49Ti/50Ti']
+        mass_rat = SPEC['masses']['49Ti'] / SPEC['masses']['50Ti']
+        frac_rat_Ti = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf_rat = SPEC['nat_ratios']['56Fe/54Fe']
+        mass_rat = SPEC['masses']['56Fe'] / SPEC['masses']['54Fe']
+        frac_rat_Fe = ratios.exp_corr(
+            interf_rat, mass_rat, self.ni)
+
+        interf = {'49': 0.0005, '50': 0.0005/frac_rat_Ti + 0.005/frac_rat_V, '51': 0.005,
+                  '54': 0.005/frac_rat_Fe, '56': 0.005}
+
+        row = ratios.row_from_abund(
+            self.mix_nnni, SPEC,
+            interferences=interf)
+        results = invert_data([row], SPEC)
+        self.assertAlmostEqual(results['d53Cr_SRM3112a'][0], self.d53Cr_nn, delta=1e-5)
+        self.assertAlmostEqual(results['alpha_nat'][0], self.nn, delta=1e-6)
+        self.assertAlmostEqual(results['beta_ins'][0],  self.ni, delta=1e-6)
 
 
 if __name__ == '__main__':
