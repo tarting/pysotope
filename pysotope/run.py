@@ -213,8 +213,10 @@ def reduce_data(
             summary.update(overview_df.loc[filename])
             all_summaries[filename] = summary
         if bool(reduced) & (cycles_file is not None):
-            ignore = [i in ignore_cycles
-                        for i, _ in enumerate(reduced[list(reduced)[0]], 1)]
+            ignore = [ (i in ignore_cycles)
+                     | (i < first_cycle)
+                     | (i > last_cycle)
+                     for i, _ in enumerate(reduced[list(reduced)[0]], 1)]
             reduced['ignore'] = ignore
             write_cycles(cycles_file, reduced, summary)
 
