@@ -129,7 +129,12 @@ def generate_cycleplots(
         # Enforce sorting of run numbers rather than using groupby
         run_numbers = sorted(list(bead_df['run_no'].unique()))
         bead_summary_df = summary_df[summary_df['bead_id'] == bead_id]
-        bead_summary_df = bead_summary_df.set_index('run_no')
+        if len(bead_summary_df.run_no.unique()) == len(bead_summary_df):
+            bead_summary_df = bead_summary_df.set_index('run_no')
+        else:
+            bead_summary_df.index = range(len(bead_summary_df))
+            print("duplicate bead id's found: using consecutive run nos.")
+
         for ax, ylab in zip(axes,
                             new_plot_vars):
             xs = [-1]
@@ -141,10 +146,9 @@ def generate_cycleplots(
 
             for run_no in run_numbers:
                 run_summary_row = bead_summary_df.loc[run_no]
-
                 run_df = bead_df[bead_df.run_no == run_no].copy()
                 run_df = run_df.iloc[run_summary_row['first_row']-1:
-                                     run_summary_row['last_row']]
+                                         run_summary_row['last_row']]
                 run_df = run_df[run_df.ignore.apply(lambda i: not i)]
                 if len(run_df) <= 1:
                     continue
@@ -176,9 +180,10 @@ def generate_cycleplots(
                 bead_ys += list(ys)
 
             ax.set_xlim(*ax.get_xlim())
-            ax.plot(ax.get_xlim(), 2*[np.mean(bead_ys)], ':k', zorder=-1)
-            root_n = len(bead_ys)**0.5
-            ax.fill_between(ax.get_xlim(), 2*[np.mean(bead_ys) - (np.std(bead_ys)*2)/root_n], 2*[np.mean(bead_ys) +( np.std(bead_ys)*2)/root_n], alpha=0.4, zorder=-1, color='k')
+            if len(bead_ys) > 0:
+                ax.plot(ax.get_xlim(), 2*[np.mean(bead_ys)], ':k', zorder=-1)
+                root_n = len(bead_ys)**0.5
+                ax.fill_between(ax.get_xlim(), 2*[np.mean(bead_ys) - (np.std(bead_ys)*2)/root_n], 2*[np.mean(bead_ys) +( np.std(bead_ys)*2)/root_n], alpha=0.4, zorder=-1, color='k')
             ax.plot(rej_xs, rej_ys, 'xr')
             ax.set_title(ylab)
         fig.suptitle(bead_id)
