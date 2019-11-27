@@ -63,7 +63,10 @@ def calc_abund(
                 elif rat == np.inf:
                     new_ratios[i] = np.nan
                 else:
-                    new_ratios[i] = rat * denom
+                    try:
+                        new_ratios[i] = rat * denom
+                    except FloatingPointError:
+                        new_ratios[i] = np.nan
             abund[numer + elem] = new_ratios
         else:
             abund[numer + elem] = ratios[i] * abund_denom
