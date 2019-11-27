@@ -115,7 +115,11 @@ pysotope calibrate 'external_variables_SRM.xlsx' 'uncalibrated.spec.json' 'outpu
 ```
 
 This command produces a new .spec.json file calibrated such that the beam-intensity
+<<<<<<< HEAD
 weighted average of the isotope composition of interrest is 0, e.g. δ⁵³Cr.
+=======
+weighted average of the isotope composition of interrest is 0, e.g. ∂^53^Cr.
+>>>>>>> d3c6f89bedcaef7844fec6af42857723764a396d
 
 ## Using as a python module
 
