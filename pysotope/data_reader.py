@@ -79,6 +79,9 @@ class DataReader(object):
 
     def __init__(self, spec):
         self.extension = None
+        if 'filetype_plugin' not in spec:
+            spec['filetype_plugin'] = 'pysotope.plugins.filetype_xls'
+
         self.filetype_plugin = spec['filetype_plugin']
         self.load_spec(spec)
 
