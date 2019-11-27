@@ -1,0 +1,224 @@
+{
+    "version": 2,
+    "description": "Setup file for spike-standard calibration. Data reduction for Cd isotopes, for 106Cd-108Cd spike pair, with reporting of e114Cd/110Cd ratio relative to NIST SRM 3108, on the Phoenix and Isoprobe-T TIMS at the Geology Section, Department of Geoscience and Natural Resources, University of Copenhagen",
+    "element": "Cd",
+    "cycle_columns": {
+        "106": 0,
+        "108": 1,
+        "110": 2,
+        "111": 3,
+        "112": 4,
+        "113": 5,
+        "114": 6,
+        "116": 7,
+        "118": 8
+    },
+    "report_fracs": [
+        "110",
+        [
+            "106",
+            "108",
+            "110",
+            "111",
+            "112",
+            "113",
+            "114",
+            "116"
+        ]
+    ],
+    "reduce_fracs": [
+        "108",
+        [
+            "106",
+            "110",
+            "114"
+        ]
+    ],
+    "rel_report": {
+        "e114Cd": [
+            "114Cd",
+            "110Cd",
+            10000,
+            true
+        ]
+    },
+    "plot_vars": {
+        "2sigma_filter": 5,
+        "intens_min": 0.05,
+        "min_cycles": 30,
+        "summary": [
+            "e114Cd",
+            "raw_110",
+            "beta_ins",
+            "spl_conc",
+            [
+                "raw_118",
+                "raw_114"
+            ]
+        ],
+        "cycles": [
+            "raw_110",
+            [
+                "raw_108",
+                "raw_110"
+            ],
+            "soln_112Cd/110Cd",
+            "e114Cd",
+            "beta_ins",
+            [
+                "raw_118",
+                "raw_114"
+            ]
+        ]
+    },
+    "used_isotopes": {
+        "106": [],
+        "108": [],
+        "110": [],
+        "111": [],
+        "112": [
+            [
+                "118",
+                "Sn"
+            ]
+        ],
+        "113": [],
+        "114": [
+            [
+                "118",
+                "Sn"
+            ]
+        ],
+        "116": [
+            [
+                "118",
+                "Sn"
+            ]
+        ]
+    },
+    "masses": {
+        "106Cd": 105.906458,
+        "108Cd": 107.9041834,
+        "110Cd": 109.9030056,
+        "111Cd": 110.9041816,
+        "112Cd": 111.9027572,
+        "113Cd": 112.9044009,
+        "114Cd": 113.9033581,
+        "116Cd": 115.9047554,
+        "112Sn": 111.904826,
+        "114Sn": 113.902784,
+        "116Sn": 115.901747,
+        "118Sn": 117.901609
+    },
+    "nat_ratios": {
+        "118Sn/112Sn": 24.96907216,
+        "118Sn/114Sn": 37.26153846,
+        "118Sn/116Sn": 1.666896077
+    },
+    "spike": {
+        "106Cd": 0.4366539329509866,
+        "108Cd": 0.3029132589175211,
+        "110Cd": 0.1299089115462401,
+        "111Cd": 0.00020398693207088878,
+        "112Cd": 0.00015178818775304052,
+        "113Cd": 6.822175922587692e-05,
+        "114Cd": 0.000164044537029713,
+        "116Cd": 2.6943622932561795e-05,
+        "name": "UCPH_RFrei_Cd",
+        "source": "TotEvap_Phoenix_2018-10-26",
+        "MB_corr_type": "114Cd/110Cd",
+        "R_raw": 0.0012558155300814613,
+        "alpha_calibration": -0.15437528873958944,
+        "e114Cd_mean_weighted": 3.5327812550334237e-10,
+        "e114Cd_2STD": 0.8500459549989313,
+        "e114Cd_2SE": 0.1103595300635378,
+        "e114Cd_N": 67
+    },
+    "standard": {
+        "106Cd": 0.012458,
+        "108Cd": 0.008888,
+        "110Cd": 0.124744,
+        "111Cd": 0.12798,
+        "112Cd": 0.24113,
+        "113Cd": 0.122274,
+        "114Cd": 0.28743,
+        "116Cd": 0.075097,
+        "name": "SRM3108",
+        "source": "Abouchami et al. 2014",
+        "MB_corr_type": "110Cd/112Cd",
+        "R_raw": 0.5173309003442126,
+        "R_ref": 0.52008918,
+        "R_ref_ref": "",
+        "alpha_inst": 0.0,
+        "ref_106Cd": 0.012458,
+        "ref_108Cd": 0.008888,
+        "ref_110Cd": 0.124744,
+        "ref_111Cd": 0.12798,
+        "ref_112Cd": 0.24113,
+        "ref_113Cd": 0.122274,
+        "ref_114Cd": 0.28743,
+        "ref_116Cd": 0.075097,
+        "95conf_106Cd": 8e-06,
+        "95conf_108Cd": 4e-06,
+        "95conf_110Cd": 1.6e-05,
+        "95conf_111Cd": 1.2e-05,
+        "95conf_112Cd": 3.8e-05,
+        "95conf_113Cd": 2.2e-05,
+        "95conf_114Cd": 5.8e-05,
+        "95conf_116Cd": 3.2e-05
+    },
+    "outlier_rejection": {
+        "iqr_limit": 1.5,
+        "max_fraction": 0.05
+    },
+    "initial_parameters": [
+        0.003,
+        -0.06,
+        0.8
+    ],
+    "date": {
+        "field": [
+            "PARAMETERS",
+            "Analysis Start Time"
+        ],
+        "report_format": "%Y-%m-%d %H:%M:%S"
+    },
+    "file_spec": {
+        "PARAMETERS": [
+            "params",
+            {
+                "start_string": "TUNING PARAMETERS",
+                "labels": [
+                    "Method Name",
+                    "Analysis Start Time",
+                    "Cycles per Block",
+                    "Number of Blocks",
+                    "No. of Sequences",
+                    "Sample/Vial Number",
+                    "Sample ID",
+                    "User name",
+                    "Serial Number",
+                    "XL Doc Name",
+                    "Temperature (\u00b0C)",
+                    "Temp Error (\u00b0C)",
+                    "Current (Amps)"
+                ]
+            }
+        ],
+        "CYCLES": [
+            "table",
+            {
+                "start_string": "Cycle,Time",
+                "end_string": "\nBLOCK Data",
+                "first_col": 2,
+                "n_columns": 9,
+                "skip_rows": 1
+            },
+            {
+                "search_string": ",Function:",
+                "first_col": 2,
+                "n_columns": 9
+            }
+        ]
+    }
+}
