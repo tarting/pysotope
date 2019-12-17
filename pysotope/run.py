@@ -208,10 +208,11 @@ def reduce_data(
 
         # Make sure that the final labels list contains values.
         # Does not succeed if no data was reduced.
-
         if summary:
             summary.update(overview_df.loc[filename])
             all_summaries[filename] = summary
+            if "F_conc" in summary.keys(): #TODO: Fix this hack
+                s_labels = summary.keys()
         if bool(reduced) & (cycles_file is not None):
             ignore = [ (i in ignore_cycles)
                      | (i < first_cycle)
@@ -220,10 +221,12 @@ def reduce_data(
             reduced['ignore'] = ignore
             write_cycles(cycles_file, reduced, summary)
 
-
     # Add filepath key to summary labels
-    s_labels = summary.keys()
-    summaries_df = pd.DataFrame(all_summaries, index=s_labels).T
+    try:
+        summaries_df = pd.DataFrame.from_dict(all_summaries).T[s_labels]
+    except NameError:
+        summaries_df = pd.DataFrame.from_dict(all_summaries).T
+        click.echo("Data Error: Data reduction failed on all samples.")
     summaries_df['spl_conc'] = (
         summaries_df.F_conc *
         summaries_df.spk_wt *
