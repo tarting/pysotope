@@ -2,7 +2,7 @@
 
 A Python 3 module and command line tool for reducing Double Spike Isotope
 measurements acquired on the IsoprobeT and Phoenix instruments at the
-Geology Section at the University of Copenhagen. 
+Geology Section at the University of Copenhagen.
 
 
 # User guide
@@ -41,7 +41,7 @@ Pysotope requires a specific directory structure, and works best if
 a separate folder is used per sample-set or project. The data_root directory
 must contain one appropriate `.json` specification file and a folder
 containing the data as .xls files or .raw folders from the IsoWorks
-software. 
+software.
 
 ```sh
 | project_root/
@@ -52,7 +52,7 @@ software.
             | run1 2189.xls
             | run2 2190.xls
             ...
-            
+
     | Cr_data_root/
         | Cr_spec_file.spec.json
         | data_dir/
@@ -65,7 +65,7 @@ software.
 ```
 
 Running pysotope is then a matter of opening a console (e.g. anaconda
-prompt on windows, or a terminal on MacOS and Linux. 
+prompt on windows, or a terminal on MacOS and Linux.
 
 Navigate to the data_root directory using the `cd` commmand and launch the
 pysotope command in the following order.
@@ -106,7 +106,7 @@ error fields, for both individual runs and summarized across a bead run.
 
 ## Calibrating spike isotope composition
 
-The spike isotope composition can be calibrated using the calibrate command given 
+The spike isotope composition can be calibrated using the calibrate command given
 an uncalibrated spec file, and an external variables file containing standard runs
 to calibrate against.
 
@@ -115,7 +115,7 @@ pysotope calibrate 'external_variables_SRM.xlsx' 'uncalibrated.spec.json' 'outpu
 ```
 
 This command produces a new .spec.json file calibrated such that the beam-intensity
-weighted average of the isotope composition of interrest is 0, e.g. δ⁵³Cr.
+weighted average of the isotope composition of interrest is 0, e.g. d53Cr.
 
 ## Using as a python module
 
@@ -163,7 +163,7 @@ Invert the data:
 reduced_cycles = pst.invert_data(df.values, spec)
 ```
 
-Where reduced_cycles is an OrderedDict with string index and 
+Where reduced_cycles is an OrderedDict with string index and
 numpy.ndarray[float] values.
 
 
@@ -174,7 +174,3 @@ summary_statistics = pst.summarise_data(reduced_cycles, spec)
 
 Which is an OrderedDict with string index and float values. These can e.g.
 be joined into a pandas dataframe, or be written to a csv file.
-
-
-
-
