@@ -26,9 +26,9 @@ This will install the packages listed in the requirements.txt file as well
 as the pysotope library and command.
 
 Check that pysotope is installed by importing the pysotope library in
-python: Run ```python [return]``` in the commandline to launch the python
-shell followed by: ```import pysotope [return]```. If no errors are
-reported, pysotope is installed correctly. Type ```exit() [return]``` to
+python: Run `python [return]` in the commandline to launch the python
+shell followed by: `import pysotope [return]`. If no errors are
+reported, pysotope is installed correctly. Type `exit() [return]` to
 exit the python shell.
 
 
@@ -133,7 +133,7 @@ Given an excel-sheet, csv or pandas dataframe of the format:
 |   120 | 0.0 | 0.2 | 0.0 | 0.5 | 0.3 | 0.2 | 0.0 |
 
 Where the index of the data columns is specified in the spec-file, in
-this case with ```pd.read_[filetype](<file>, index_col=0)``` index of m49
+this case with `pd.read_[filetype](<file>, index_col=0)` index of m49
 is 0 and m56 is 6. There can be any number of columns in the datafile as
 long as it is indexed correctly.
 
